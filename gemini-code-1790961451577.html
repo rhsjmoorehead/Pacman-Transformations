@@ -1,0 +1,2699 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ms. Pac-Man: Transformations</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Google Retro Arcade & Math Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;600;700&family=Fira+Code:wght@500;700&display=swap" rel="stylesheet">
+
+  <style>
+    .font-arcade { font-family: 'Press Start 2P', monospace; }
+    .font-sans-clean { font-family: 'Space Grotesk', sans-serif; }
+    .font-mono-math { font-family: 'Fira Code', monospace; }
+
+    /* Neon Glow Effects */
+    .glow-blue { box-shadow: 0 0 20px rgba(59, 130, 246, 0.4), inset 0 0 10px rgba(59, 130, 246, 0.2); }
+    .glow-pink { box-shadow: 0 0 20px rgba(236, 72, 153, 0.4), inset 0 0 10px rgba(236, 72, 153, 0.2); }
+    .glow-yellow { box-shadow: 0 0 15px rgba(234, 179, 8, 0.5); }
+    .glow-cyan { box-shadow: 0 0 20px rgba(34, 211, 238, 0.4), inset 0 0 10px rgba(34, 211, 238, 0.2); }
+    .glow-red { box-shadow: 0 0 25px rgba(239, 68, 68, 0.6); }
+    .text-glow-yellow { text-shadow: 0 0 8px rgba(250, 204, 21, 0.8); }
+    .text-glow-pink { text-shadow: 0 0 8px rgba(244, 114, 182, 0.8); }
+    .text-glow-cyan { text-shadow: 0 0 8px rgba(34, 211, 238, 0.8); }
+
+    /* CRT Scanline Overlay Effect */
+    .crt-overlay::after {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 255, 0, 0.03));
+      z-index: 20;
+      background-size: 100% 4px, 6px 100%;
+      pointer-events: none;
+      border-radius: 12px;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #090d16; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    canvas {
+      image-rendering: pixelated;
+      touch-action: none;
+    }
+  </style>
+</head>
+
+<body class="h-full text-slate-100 font-sans-clean flex flex-col justify-between overflow-x-hidden bg-slate-950 selection:bg-pink-500 selection:text-white">
+
+  <!-- Header Section -->
+  <header class="bg-slate-900 border-b border-blue-900/60 p-2.5 px-4 shadow-xl shrink-0">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Title & Emblem -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-yellow-400/10 border border-yellow-400/40 flex items-center justify-center glow-yellow">
+          <i class="fa-solid fa-ghost text-yellow-400 text-xl animate-pulse"></i>
+        </div>
+        <div>
+          <h1 class="font-arcade text-xs sm:text-sm text-yellow-400 text-glow-yellow tracking-wider">
+            MS. PAC-MAN
+          </h1>
+          <p class="text-xs text-pink-400 font-semibold tracking-wide">
+            TRANSFORMATIONS PROJECT
+          </p>
+        </div>
+      </div>
+
+      <!-- Live HUD Display -->
+      <div class="flex items-center gap-3 sm:gap-5 bg-slate-950/90 px-4 py-2 rounded-xl border border-slate-800 text-xs font-arcade">
+        <div class="flex flex-col items-center">
+          <span class="text-[9px] text-slate-400 font-sans-clean">SCORE</span>
+          <span id="hud-score" class="text-yellow-300 text-glow-yellow">0000</span>
+        </div>
+        <div class="h-6 w-px bg-slate-800"></div>
+        <div class="flex flex-col items-center">
+          <span class="text-[9px] text-slate-400 font-sans-clean">DOTS EATEN</span>
+          <span id="hud-pellets" class="text-pink-400 text-glow-pink">0 / 0</span>
+        </div>
+        <div class="h-6 w-px bg-slate-800"></div>
+        <div class="flex flex-col items-center">
+          <span class="text-[9px] text-slate-400 font-sans-clean">POSITION</span>
+          <span id="hud-pos" class="text-cyan-400 text-glow-cyan">(0, -9)</span>
+        </div>
+      </div>
+
+      <!-- Control Toolbar -->
+      <div class="flex items-center gap-2">
+        <button id="btn-save-indicator" title="Auto-Save Enabled" class="px-2.5 py-1.5 rounded-lg bg-emerald-950/80 text-emerald-400 border border-emerald-700/60 text-xs font-semibold flex items-center gap-1.5">
+          <i class="fa-solid fa-floppy-disk text-xs"></i>
+          <span class="hidden md:inline">Auto-Saved</span>
+        </button>
+        <button id="btn-crt" title="Toggle CRT Screen Glow" class="p-2 w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
+          <i class="fa-solid fa-tv text-sm"></i>
+        </button>
+        <button id="btn-cheat-sheet" title="Transformation Syntax Reference" class="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white font-semibold text-xs border border-pink-400 shadow flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-book-open"></i>
+          <span class="hidden sm:inline">Syntax Guide</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Main Game Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+    
+    <!-- LEFT COLUMN: Coordinate Grid Canvas -->
+    <section class="lg:col-span-7 xl:col-span-8 flex flex-col items-center justify-center bg-slate-900/90 rounded-2xl border-2 border-blue-500/40 p-2 sm:p-3 glow-blue relative overflow-hidden">
+      
+      <!-- Canvas Header Bar -->
+      <div class="w-full flex items-center justify-between mb-2 px-2 text-xs">
+        <div class="flex items-center gap-2">
+          <span class="font-arcade text-[10px] text-blue-400">TASK:</span>
+          <select id="level-select" class="bg-slate-950 text-yellow-300 font-arcade text-[10px] px-2 py-1 rounded border border-blue-700/60 focus:outline-none focus:border-yellow-400 cursor-pointer">
+            <option value="1">Level 1: Play with the video</option>
+            <option value="2">Level 2: Part 2 - Normal Mode (Max 20 Moves)</option>
+            <option value="3">Level 3: Part 2 - Hard Mode (Max 20 Moves)</option>
+            <option value="4">Level 4: Free play</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Fruit Point Values Panel -->
+      <div id="fruit-legend" class="w-full hidden bg-slate-950/90 border border-amber-500/40 rounded-xl p-2 mb-2">
+        <div class="text-[10px] font-arcade text-amber-400 mb-1 flex items-center gap-1.5 justify-center">
+          <i class="fa-solid fa-star"></i> FRUIT POINT VALUES
+        </div>
+        <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-200 font-mono">
+          <span>🍌 Banana: <strong class="text-yellow-400">4 pts</strong></span>
+          <span>🍐 Pear: <strong class="text-yellow-400">5 pts</strong></span>
+          <span>🍎 Apple: <strong class="text-yellow-400">10 pts</strong></span>
+          <span>🥨 Pretzel: <strong class="text-yellow-400">20 pts</strong></span>
+          <span>🍊 Orange: <strong class="text-yellow-400">25 pts</strong></span>
+          <span>🍓 Strawberry: <strong class="text-yellow-400">30 pts</strong></span>
+          <span>🍒 Cherries: <strong class="text-yellow-400">40 pts</strong></span>
+        </div>
+      </div>
+
+      <!-- Main Canvas Wrapper -->
+      <div id="canvas-container" class="relative w-full aspect-[27/28] max-w-[620px] flex items-center justify-center bg-slate-950 rounded-xl border border-slate-800 shadow-2xl overflow-hidden crt-overlay">
+        <canvas id="game-canvas" class="w-full h-full block rounded-xl"></canvas>
+
+        <!-- Game Over Overlay Modal -->
+        <div id="game-over-modal" class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-4 hidden">
+          <div class="bg-slate-900 border-2 border-red-500/80 rounded-2xl p-6 max-w-xs w-full text-center shadow-2xl flex flex-col items-center gap-4 glow-red">
+            <div class="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/40 flex items-center justify-center text-red-500 text-2xl animate-pulse">
+              <i class="fa-solid fa-ghost"></i>
+            </div>
+            <div>
+              <h2 class="font-arcade text-sm text-red-500 tracking-wider mb-1">GAME OVER</h2>
+              <p id="game-over-level-title" class="text-[10px] font-arcade text-amber-400 mb-2">GHOST COLLISION</p>
+              <p id="game-over-desc" class="text-xs text-slate-300 font-sans-clean leading-relaxed">
+                Ms. Pac-Man attempted to pass through or land on a ghost!
+              </p>
+            </div>
+            <button id="btn-confirm-game-over" class="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white font-arcade text-xs rounded-xl shadow-lg border border-red-400 transition transform hover:scale-105 active:scale-95 cursor-pointer">
+              CONFIRM
+            </button>
+          </div>
+        </div>
+
+        <!-- Reset Level Confirmation Overlay Modal -->
+        <div id="reset-confirm-modal" class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-4 hidden">
+          <div class="bg-slate-900 border-2 border-yellow-500/80 rounded-2xl p-6 max-w-xs w-full text-center shadow-2xl flex flex-col items-center gap-4 glow-yellow">
+            <div class="w-12 h-12 rounded-full bg-yellow-500/10 border border-yellow-500/40 flex items-center justify-center text-yellow-400 text-2xl animate-pulse">
+              <i class="fa-solid fa-rotate-left"></i>
+            </div>
+            <div>
+              <h2 class="font-arcade text-sm text-yellow-400 tracking-wider mb-1">RESET LEVEL?</h2>
+              <p class="text-xs text-slate-300 font-sans-clean leading-relaxed">
+                Are you sure you want to reset the current level? All move history and progress for this level will be reset.
+              </p>
+            </div>
+            <div class="flex gap-2 w-full">
+              <button id="btn-confirm-reset" class="flex-1 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-arcade font-bold text-xs rounded-xl shadow-lg border border-yellow-300 transition transform hover:scale-105 active:scale-95 cursor-pointer">
+                CONFIRM
+              </button>
+              <button id="btn-cancel-reset" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-arcade font-bold text-xs rounded-xl shadow-lg border border-slate-600 transition transform hover:scale-105 active:scale-95 cursor-pointer">
+                CANCEL
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Canvas Footer Toolbar -->
+      <div class="w-full flex flex-col gap-2 mt-2.5 px-2 text-xs text-slate-400">
+        <!-- REPLAY CONTROL BAR -->
+        <div id="replay-bar" class="w-full bg-slate-950 border border-cyan-500/50 rounded-xl p-2 flex flex-wrap items-center justify-between gap-2 shadow-lg">
+          <div class="flex items-center gap-2">
+            <button id="btn-start-replay" disabled class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 text-white disabled:text-slate-500 font-semibold text-xs border border-cyan-400/60 disabled:border-slate-700 shadow flex items-center gap-1.5 transition active:scale-95 disabled:pointer-events-none cursor-pointer">
+              <i class="fa-solid fa-film"></i>
+              <span>Replay Steps</span>
+            </button>
+            <span id="replay-badge" class="hidden text-[10px] font-arcade bg-cyan-950 text-cyan-300 border border-cyan-700/60 px-2.5 py-1 rounded-full animate-pulse">
+              👻 GHOST REPLAY ACTIVE
+            </span>
+          </div>
+
+          <!-- Active Replay Animation Controls -->
+          <div id="replay-controls" class="hidden flex flex-wrap items-center gap-2">
+            <button id="btn-replay-prev" title="Rewind Step Back" class="p-1.5 w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition flex items-center justify-center active:scale-95 cursor-pointer">
+              <i class="fa-solid fa-backward-step text-xs"></i>
+            </button>
+            <button id="btn-replay-play" title="Play / Pause Replay" class="p-1.5 w-8 h-8 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white border border-cyan-400 transition flex items-center justify-center active:scale-95 shadow cursor-pointer">
+              <i id="icon-replay-play" class="fa-solid fa-pause text-xs"></i>
+            </button>
+            <button id="btn-replay-next" title="Step Forward" class="p-1.5 w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition flex items-center justify-center active:scale-95 cursor-pointer">
+              <i class="fa-solid fa-forward-step text-xs"></i>
+            </button>
+
+            <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg text-xs font-mono">
+              <span id="replay-step-info" class="text-cyan-300 font-bold">Step 1 / 1</span>
+              <span id="replay-delay-timer" class="text-yellow-400 text-[11px] font-bold bg-yellow-950/60 border border-yellow-700/50 px-1.5 py-0.5 rounded">⏱️ 5.0s</span>
+            </div>
+
+            <button id="btn-exit-replay" title="Exit Replay Mode" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-red-950 hover:text-red-300 text-slate-300 text-xs border border-slate-700 transition cursor-pointer">
+              <i class="fa-solid fa-xmark mr-1"></i> Exit
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: Console Input, Quick Presets & Step History -->
+    <section class="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">
+      
+      <!-- Command Console Box -->
+      <div class="bg-slate-900 rounded-2xl border-2 border-pink-500/40 p-4 glow-pink flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <h2 class="font-arcade text-xs text-pink-400 text-glow-pink flex items-center gap-2">
+            <i class="fa-solid fa-terminal text-sm"></i> TRANSFORM CONSOLE
+          </h2>
+          <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">Command Input</span>
+        </div>
+
+        <form id="command-form" class="flex flex-col gap-2">
+          <div class="relative">
+            <input 
+              type="text" 
+              id="command-input" 
+              placeholder='e.g. (x-2, y) OR reflect y=-9 OR rotate 90 cw OR 2(x,y)' 
+              autocomplete="off"
+              spellcheck="false"
+              class="w-full bg-slate-950 border-2 border-slate-700 focus:border-pink-500 text-yellow-300 font-mono text-sm rounded-xl px-3.5 py-2.5 pr-10 focus:outline-none transition shadow-inner placeholder:text-slate-600"
+            />
+            <button type="submit" class="absolute right-2 top-2 bottom-2 px-3 bg-pink-600 hover:bg-pink-500 text-white rounded-lg text-xs font-bold transition flex items-center justify-center shadow cursor-pointer">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </div>
+        </form>
+
+        <!-- Feedback & Error Notification Bar -->
+        <div id="feedback-msg" class="hidden p-2.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all">
+          <i id="feedback-icon" class="fa-solid text-sm shrink-0"></i>
+          <span id="feedback-text"></span>
+        </div>
+
+        <!-- QUICK PRESETS -->
+        <div class="pt-1">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[11px] text-slate-300 font-semibold flex items-center gap-1.5">
+              <i class="fa-solid fa-rotate text-yellow-400"></i> Quick Rotation Controls:
+            </span>
+          </div>
+          <div class="grid grid-cols-2 gap-2" id="preset-chips">
+            <button class="preset-chip bg-slate-950 hover:bg-slate-800 border-2 border-yellow-500/60 hover:border-yellow-400 text-yellow-300 font-mono text-xs px-3 py-2 rounded-xl transition flex items-center justify-center gap-2 shadow active:scale-95 cursor-pointer" data-cmd="rotate 90 cw">
+              <i class="fa-solid fa-rotate-right text-amber-400"></i>
+              <span>Rotate 90° CW</span>
+            </button>
+            <button class="preset-chip bg-slate-950 hover:bg-slate-800 border-2 border-yellow-500/60 hover:border-yellow-400 text-yellow-300 font-mono text-xs px-3 py-2 rounded-xl transition flex items-center justify-center gap-2 shadow active:scale-95 cursor-pointer" data-cmd="rotate 90 ccw">
+              <i class="fa-solid fa-rotate-left text-amber-400"></i>
+              <span>Rotate 90° CCW</span>
+            </button>
+          </div>
+
+          <!-- FACING & ORIENTATION RULES BOX -->
+          <p class="text-[10px] text-slate-400 mt-2.5 leading-relaxed bg-slate-950 p-2.5 rounded-lg border border-slate-800">
+            <i class="fa-solid fa-compass text-green-400 mr-1"></i>
+            <strong>Facing & Orientation Rules:</strong>
+            <br>&bull; Ms. Pac-Man can only move straight in the direction she faces.
+            <br>&bull; If upside down, she cannot move until restored upright.
+            <br>&bull; <strong>Up/Down Movement & Bow Orientation:</strong>
+            <br>&nbsp;&nbsp;&bull; <strong>Level 1:</strong> Moving UP requires Bow on LEFT. Moving DOWN requires Bow on RIGHT.
+            <br>&nbsp;&nbsp;&bull; <strong>Levels 2, 3, & 4:</strong> Bow position (left/right) does not matter for Up/Down movement.
+            <br>&bull; <strong>Rotations (Levels 1–3):</strong> Rotations are restricted to Ms. Pac-Man's current location.
+          </p>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
+          <button id="btn-reset-level" class="flex-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-700 transition active:scale-95 cursor-pointer">
+            <i class="fa-solid fa-rotate-left"></i> Reset Level
+          </button>
+          <button id="btn-undo" class="flex-1 px-3 py-2 rounded-xl bg-amber-600/30 hover:bg-amber-600/50 text-amber-300 text-xs font-semibold flex items-center justify-center gap-1.5 border border-amber-500/50 transition active:scale-95 cursor-pointer">
+            <i class="fa-solid fa-backward-step"></i> Undo Transformation
+          </button>
+        </div>
+
+      </div>
+
+      <!-- History Log Display -->
+      <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 flex flex-col gap-3 flex-1 min-h-[240px]">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <h3 class="font-arcade text-xs text-blue-400 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left"></i> STEP HISTORY
+          </h3>
+          <span id="step-count" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">0 steps</span>
+        </div>
+
+        <div id="history-list" class="flex flex-col gap-2 overflow-y-auto max-h-[260px] pr-1 scroll-smooth">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Syntax Reference Modal -->
+  <div id="cheat-sheet-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity">
+    <div class="bg-slate-900 border-2 border-pink-500 max-w-2xl w-full rounded-2xl p-5 shadow-2xl glow-pink flex flex-col max-h-[90vh]">
+      
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-graduation-cap text-yellow-400 text-xl"></i>
+          <h2 class="font-arcade text-sm text-yellow-400 text-glow-yellow">TRANSFORMATION SYNTAX GUIDE</h2>
+        </div>
+        <button id="btn-close-modal" class="text-slate-400 hover:text-white text-xl p-1 cursor-pointer">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="overflow-y-auto pr-2 space-y-4 text-xs">
+        
+        <div class="bg-pink-950/50 p-3 rounded-xl border border-pink-600/60 text-pink-200">
+          <h4 class="font-bold text-pink-300 text-xs mb-1 flex items-center gap-1.5">
+            <i class="fa-solid fa-circle-exclamation"></i> GAME RULES & CONSTRAINTS:
+          </h4>
+          <ul class="list-disc list-inside space-y-1 text-[11px]">
+            <li><strong>Facing Rule:</strong> Ms. Pac-Man can only move straight in the direction she faces (LEFT, RIGHT, UP, DOWN).</li>
+            <li><strong>Upside Down Constraint:</strong> If Ms. Pac-Man is upside down, she cannot move until reflected/rotated upright.</li>
+            <li><strong>Bow Orientation:</strong> Level 1 requires bow on LEFT to move UP and bow on RIGHT to move DOWN. Levels 2–4 do not require specific bow positions for vertical moves.</li>
+            <li><strong>Rotation Rules:</strong> Levels 1–3 only allow rotations at Ms. Pac-Man's current location. Level 4 allows rotation about any center point!</li>
+            <li><strong>Reflection Rules:</strong> Levels 1–3 require the reflection axis to match current x or y position. Level 4 allows any reflection!</li>
+            <li><strong>Dilation (Level 4):</strong> Supports dilations k(x,y) where k is between 0.25 and 3.</li>
+            <li><strong>Wall Rules:</strong> Rotations and reflections that land on a wall are not allowed.</li>
+            <li><strong>Ghost Rules (Levels 3 & 4):</strong> Stepping on normal ghosts causes Game Over. Eating power pellets turns ghosts purple; stepping on purple ghosts removes them (+100 pts).</li>
+            <li><strong>Auto-Save:</strong> Your position, history, and dot progress are stored automatically in your browser.</li>
+          </ul>
+        </div>
+
+        <div class="bg-slate-950 p-3.5 rounded-xl border border-blue-800/60">
+          <h3 class="font-bold text-blue-400 text-sm mb-1.5 flex items-center gap-2">
+            <i class="fa-solid fa-arrows-up-down-left-right text-xs"></i> 1. Translations (Move in Facing Direction)
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-cyan-300">
+              <code>(x-2, y)</code> <span class="text-slate-400 text-[10px] block font-sans">Move Left 2 units (Must face LEFT)</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-cyan-300">
+              <code>(x+2, y)</code> <span class="text-slate-400 text-[10px] block font-sans">Move Right 2 units (Must face RIGHT)</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-cyan-300">
+              <code>(x, y+4)</code> <span class="text-slate-400 text-[10px] block font-sans">Move Up 4 units (Must face UP)</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-cyan-300">
+              <code>(x, y-3)</code> <span class="text-slate-400 text-[10px] block font-sans">Move Down 3 units (Must face DOWN)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-3.5 rounded-xl border border-yellow-800/60">
+          <h3 class="font-bold text-yellow-400 text-sm mb-1.5 flex items-center gap-2">
+            <i class="fa-solid fa-rotate-right text-xs"></i> 2. Rotations (Current Spot or Center Point)
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-yellow-300">
+              <code>rotate 90 cw</code> <span class="text-slate-400 text-[10px] block font-sans">90° Clockwise on current spot (Levels 1–4)</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-yellow-300">
+              <code>rotate 90 ccw</code> <span class="text-slate-400 text-[10px] block font-sans">90° Counter-Clockwise on current spot (Levels 1–4)</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-yellow-300">
+              <code>rotate 90 cw about (1,2)</code> <span class="text-slate-400 text-[10px] block font-sans">Rotate 90° CW around center point (1,2) (Level 4)</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-yellow-300">
+              <code>rotate 180 cw about (0,0)</code> <span class="text-slate-400 text-[10px] block font-sans">Rotate 180° around center point (0,0) (Level 4)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-3.5 rounded-xl border border-pink-800/60">
+          <h3 class="font-bold text-pink-400 text-sm mb-1.5 flex items-center gap-2">
+            <i class="fa-solid fa-arrows-rotate text-xs"></i> 3. Reflections
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-pink-300">
+              <code>reflect x=c</code> <span class="text-slate-400 text-[10px] block font-sans">Reflect across vertical line x=c</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-pink-300">
+              <code>reflect y=c</code> <span class="text-slate-400 text-[10px] block font-sans">Reflect across horizontal line y=c</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-pink-300">
+              <code>reflect y=x</code> <span class="text-slate-400 text-[10px] block font-sans">Reflect across diagonal line y=x</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-pink-300">
+              <code>reflect y=-x</code> <span class="text-slate-400 text-[10px] block font-sans">Reflect across diagonal line y=-x</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-950 p-3.5 rounded-xl border border-purple-800/60">
+          <h3 class="font-bold text-purple-400 text-sm mb-1.5 flex items-center gap-2">
+            <i class="fa-solid fa-expand text-xs"></i> 4. Dilations (Level 4 Free play)
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-purple-300">
+              <code>2(x,y)</code> <span class="text-slate-400 text-[10px] block font-sans">Enlarge Ms. Pac-Man to 2x size</span>
+            </div>
+            <div class="bg-slate-900 p-2 rounded border border-slate-800 text-purple-300">
+              <code>0.5(x,y)</code> <span class="text-slate-400 text-[10px] block font-sans">Shrink Ms. Pac-Man to 0.5x size</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-slate-800 flex justify-end">
+        <button id="btn-close-modal-2" class="px-4 py-2 bg-pink-600 hover:bg-pink-500 text-white font-bold text-xs rounded-xl transition cursor-pointer">
+          Got It! Back to Arcade
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT GAME ENGINE & STORAGE LOGIC -->
+  <script>
+    class RetroAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      playWaka() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.exponentialRampToValueAtTime(220, now + 0.08);
+
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.08);
+      }
+
+      playSwoosh() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(280, now);
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.18);
+
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.18);
+      }
+
+      playUndo() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.15);
+
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.15);
+      }
+
+      playError() {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.linearRampToValueAtTime(80, now + 0.22);
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.22);
+      }
+    }
+
+    const audio = new RetroAudioEngine();
+
+    /* CENTRALIZED WALL GEOMETRY CONFIGURATION */
+    const WALL_RECTS = [
+      { xMin: -13, xMax: 14, yMin: 14, yMax: 14, type: 1 },
+      { xMin: -13, xMax: 14, yMin: -16, yMax: -16, type: 1 },
+      { xMin: -16, xMax: -13, yMin: 2, yMax: 15, type: 1 },
+      { xMin: -16, xMax: -11, yMin: 2, yMax: 5, type: 1 },
+      { xMin: -16, xMax: -13, yMin: -17, yMax: -3, type: 1 },
+      { xMin: -16, xMax: -11, yMin: -8, yMax: -3, type: 1 },
+      { xMin: 14, xMax: 17, yMin: 2, yMax: 15, type: 1 },
+      { xMin: 12, xMax: 17, yMin: 2, yMax: 5, type: 1 },
+      { xMin: 14, xMax: 17, yMin: -17, yMax: -3, type: 1 },
+      { xMin: 12, xMax: 17, yMin: -8, yMax: -3, type: 1 },
+      { xMin: -3, xMax: 4, yMin: -2, yMax: 2, type: 2 },
+      { xMin: -11, xMax: -8, yMin: 7, yMax: 8, type: 1 },
+      { xMin: -11, xMax: -10, yMin: 7, yMax: 12, type: 1 },
+      { xMin: 9,  xMax: 12, yMin: 7, yMax: 8, type: 1 },
+      { xMin: 11, xMax: 12, yMin: 7, yMax: 12, type: 1 },
+      { xMin: -8, xMax: -5, yMin: 10, yMax: 12, type: 1 },
+      { xMin: 6,  xMax: 9,  yMin: 10, yMax: 12, type: 1 },
+      { xMin: -3, xMax: -2, yMin: 7, yMax: 12, type: 1 },
+      { xMin: 3,  xMax: 4,  yMin: 7, yMax: 12, type: 1 },
+      { xMin: -3, xMax: 4,  yMin: 11, yMax: 12, type: 1 },
+      { xMin: 0, xMax: 1, yMin: 4, yMax: 9, type: 1 },
+      { xMin: 0 , xMax: 1, yMin: -8, yMax: -4, type: 1 },
+      { xMin: -9, xMax: -2, yMin: 4, yMax: 5, type: 1 },
+      { xMin: -6, xMax: -5, yMin: 1, yMax: 8, type: 1 },
+      { xMin: 3,  xMax: 10, yMin: 4, yMax: 5, type: 1 },
+      { xMin: 6,  xMax: 7,  yMin: 1, yMax: 8, type: 1 },
+      { xMin: -15, xMax: -8, yMin: -1, yMax: 0, type: 1 },
+      { xMin: -9,  xMax: -8, yMin: -3, yMax: 2, type: 1 },
+      { xMin: 9,   xMax: 16, yMin: -1, yMax: 0, type: 1 },
+      { xMin: 9,   xMax: 10, yMin: -3, yMax: 2, type: 1 },
+      { xMin: -3, xMax: 4,  yMin: -11, yMax: -10, type: 1 },
+      { xMin: -3, xMax: -2, yMin: -11, yMax: -7, type: 1 },
+      { xMin: 3,  xMax: 4,  yMin: -11, yMax: -7, type: 1 },
+      { xMin: -6, xMax: -5, yMin: -5, yMax: -1, type: 1 },
+      { xMin: -6,  xMax: -2,  yMin: -5, yMax: -4, type: 1 },
+      { xMin: -9, xMax: -8, yMin: -8, yMax: -5, type: 1 },
+      { xMin: -9,  xMax: -5,  yMin: -8, yMax: -7, type: 1 },
+      { xMin: -11, xMax: -10, yMin: -14, yMax: -10, type: 1 },
+      { xMin: -11, xMax: -8, yMin: -11, yMax: -10, type: 1 },
+      { xMin: -8, xMax: -2, yMin: -14, yMax: -13, type: 1 },
+      { xMin: -6, xMax: -5, yMin: -14, yMax: -10, type: 1 },
+      { xMin: 6, xMax: 7, yMin: -5, yMax: -1, type: 1 },
+      { xMin: 3,  xMax: 7,  yMin: -5, yMax: -4, type: 1 },
+      { xMin: 9, xMax: 10, yMin: -8, yMax: -5, type: 1 },
+      { xMin: 6,  xMax: 10,  yMin: -8, yMax: -7, type: 1 },
+      { xMin: 11, xMax: 12, yMin: -14, yMax: -10, type: 1 },
+      { xMin: 9, xMax: 12, yMin: -11, yMax: -10, type: 1 },
+      { xMin: 3, xMax: 9, yMin: -14, yMax: -13, type: 1 },
+      { xMin: 6, xMax: 7, yMin: -14, yMax: -10, type: 1 },
+      { xMin: 0, xMax: 1, yMin: -17, yMax: -13, type: 1 },
+	  
+      { xMin: -3, xMax: 4, yMin: -9, yMax: 5, type: 3 },
+      { xMin: -6, xMax: 7, yMin: -5, yMax: 5, type: 3 },
+      { xMin: -16, xMax: -10, yMin: -3, yMax: 2, type: 3 },
+      { xMin: 9, xMax: 15, yMin: -3, yMax: 2, type: 3 },
+	  
+      { xMin: -16, xMax: -13, yMin: -9, yMax: -7, type: 2 },
+      { xMin: 14, xMax: 16, yMin: -9, yMax: -7, type: 2 },
+      { xMin: -16, xMax: -13, yMin: 4, yMax: 6, type: 2 },
+      { xMin: 14, xMax: 16, yMin: 4, yMax: 6, type: 2 },
+      { xMin: -16, xMax: 16, yMin: -17, yMax: -16, type: 2 },
+      { xMin: -16, xMax: 16, yMin: 14, yMax: 15, type: 2 },
+      { xMin: -16, xMax: -8, yMin: -1, yMax: 0, type: 2 },
+      { xMin: 9, xMax: 15, yMin: -1, yMax: 0, type: 2 },
+      { xMin: -7, xMax: -3, yMin: 4, yMax: 5, type: 2 },
+      { xMin: 5, xMax: 9, yMin: 4, yMax: 5, type: 2 },
+      { xMin: -3, xMax: -2, yMin: 9, yMax: 12, type: 2 },
+      { xMin: 3, xMax: 4, yMin: 9, yMax: 12, type: 2 },
+      { xMin: -11, xMax: -9, yMin: 7, yMax: 8, type: 2 },
+      { xMin: 9, xMax: 12, yMin: 7, yMax: 8, type: 2 },
+      { xMin: -3,  xMax: 4,  yMin: -11, yMax: -10, type: 2 },
+      { xMin: -6,  xMax: -5,  yMin: -5, yMax: -3, type: 2 },
+      { xMin: 6,  xMax: 7,  yMin: -5, yMax: -3, type: 2 },
+      { xMin: -9,  xMax: -8,  yMin: -8, yMax: -6, type: 2 },
+      { xMin: -11,  xMax: -10,  yMin: -12, yMax: -10, type: 2 },
+      { xMin: -7,  xMax: -4,  yMin: -14, yMax: -13, type: 2 },
+      { xMin: 5,  xMax: 9,  yMin: -14, yMax: -13, type: 2 },
+      { xMin: 11,  xMax: 12,  yMin: -13, yMax: -10, type: 2 },
+      { xMin: 9,  xMax: 10,  yMin: -8, yMax: -6, type: 2 },
+    ];
+
+    function isBlockingWall(gx, gy) {
+      if ((gy === 1 || gy === -2) && (gx === -13 || gx === 14)) {
+        return false;
+      }
+      return WALL_RECTS.some(w => {
+        const type = w.type || 1;
+        return (type === 1 || type === 2) && (gx >= w.xMin && gx <= w.xMax && gy >= w.yMin && gy <= w.yMax);
+      });
+    }
+
+    function isDotRemovingWall(gx, gy) {
+      return WALL_RECTS.some(w => gx >= w.xMin && gx <= w.xMax && gy >= w.yMin && gy <= w.yMax);
+    }
+
+    /* 2x2 Matrix Helper Functions */
+    const Matrix2x2 = {
+      identity: () => [[1, 0], [0, 1]],
+
+      multiply: (A, B) => [
+        [
+          A[0][0] * B[0][0] + A[0][1] * B[1][0],
+          A[0][0] * B[0][1] + A[0][1] * B[1][1]
+        ],
+        [
+          A[1][0] * B[0][0] + A[1][1] * B[1][0],
+          A[1][0] * B[0][1] + A[1][1] * B[1][1]
+        ]
+      ],
+
+      reflectionX: () => [[-1, 0], [0, 1]],
+      reflectionY: () => [[1, 0], [0, -1]],
+      reflectionYX: () => [[0, 1], [1, 0]],
+      reflectionYNegX: () => [[0, -1], [-1, 0]],
+
+      rotation: (deg) => {
+        const rad = (deg * Math.PI) / 180;
+        const c = Math.round(Math.cos(rad));
+        const s = Math.round(Math.sin(rad));
+        return [
+          [c, -s],
+          [s, c]
+        ];
+      },
+
+      getFacingVector: (M) => {
+        const fx = Math.round(-M[0][0]);
+        const fy = Math.round(-M[1][0]);
+        return { fx, fy };
+      },
+
+      getBowVector: (M) => {
+        const bx = Math.round(M[0][1]);
+        const by = Math.round(M[1][1]);
+        return { bx, by };
+      },
+
+      getFacingName: (M) => {
+        const { fx, fy } = Matrix2x2.getFacingVector(M);
+        if (fx === -1 && fy === 0) return 'LEFT';
+        if (fx === 1 && fy === 0) return 'RIGHT';
+        if (fx === 0 && fy === 1) return 'UP';
+        if (fx === 0 && fy === -1) return 'DOWN';
+        return 'CUSTOM';
+      }
+    };
+
+    /* Level Settings Config */
+    const LEVELS = {
+      1: { title: "Worksheet Guided Lesson", startX: 0, startY: -9, maxMoves: null, enforceBow: true },
+      2: { title: "Level 2: Part 2 - Normal Mode", startX: 0, startY: -9, maxMoves: 20, enforceBow: false },
+      3: { title: "Level 3: Part 2 - Hard Mode", startX: 0, startY: -9, maxMoves: 20, enforceBow: false },
+      4: { title: "Level 4: Free play", startX: 0, startY: -9, maxMoves: null, enforceBow: false }
+    };
+
+    /* Ghost Coordinates for Levels 3 & 4 */
+    const MAP_GHOSTS = [
+      { id: 'blinky', name: 'Blinky', color: '#ef4444', x: -4, y: 13 },
+      { id: 'pinky', name: 'Pinky', color: '#f472b6', x: -7, y: -9 },
+      { id: 'inky', name: 'Inky', color: '#06b6d4', x: 11, y: 5 },
+      { id: 'clyde', name: 'Clyde', color: '#f97316', x: 5, y: -7 }
+    ];
+
+    /* Standard Fruit Preset Data */
+    const FRUIT_ITEMS_STANDARD = [
+      { type: 'banana', x: -4, y: -9, pts: 4 },
+      { type: 'pear', x: 5, y: -12, pts: 5 },
+      { type: 'apple', x: 5, y: -9, pts: 10 },
+      { type: 'pretzel', x: -12, y: -9, pts: 20 },
+      { type: 'orange', x: 8, y: 3, pts: 25 },
+      { type: 'strawberry', x: -9, y: 13, pts: 30 },
+      { type: 'cherries', x: 2, y: 13, pts: 40 }
+    ];
+
+    const LEVEL_FRUITS = {
+      2: FRUIT_ITEMS_STANDARD,
+      3: FRUIT_ITEMS_STANDARD,
+      4: FRUIT_ITEMS_STANDARD
+    };
+
+    function parseTransformation(inputStr, currentX, currentY, currentM) {
+      const str = inputStr.trim().toLowerCase();
+
+      // 1. DILATIONS
+      const dilMatch = str.match(/^([0-9.]+)\s*\(\s*(-?\d+|x)?\s*,\s*(-?\d+|y)?\s*\)$/i) || str.match(/^(?:dilate|dilation|scale)\s*([0-9.]+)$/i);
+      if (dilMatch) {
+        const k = parseFloat(dilMatch[1]);
+        if (isNaN(k) || k < 0.25 || k > 3.0) {
+          return { error: "Dilation factor k must be a real number between 0.25 and 3." };
+        }
+        return {
+          type: 'dilation',
+          scale: k,
+          targetX: currentX,
+          targetY: currentY,
+          targetM: currentM,
+          notation: `${k}(x,y)`
+        };
+      }
+
+      // 2. ROTATIONS
+      const rotMatch = str.match(/^(?:rotate|rot|r|turn)?\s*([+-]?\d+)?\s*(ccw|cw|clockwise|counterclockwise)?\s*(?:about|around|at)?\s*(?:\(\s*([+-]?\d+)\s*,\s*([+-]?\d+)\s*\))?$/i);
+      if (rotMatch && (rotMatch[1] || rotMatch[2] || rotMatch[3] !== undefined || str === 'cw' || str === 'ccw')) {
+        let deg = rotMatch[1] ? parseInt(rotMatch[1], 10) : 90;
+        const dirStr = (rotMatch[2] || str).toLowerCase();
+
+        let effectiveAngle = Math.abs(deg);
+        if (dirStr === 'cw' || dirStr === 'clockwise') {
+          effectiveAngle = -Math.abs(deg);
+        } else if (dirStr === 'ccw' || dirStr === 'counterclockwise') {
+          effectiveAngle = Math.abs(deg);
+        }
+
+        const R = Matrix2x2.rotation(effectiveAngle);
+        const newM = Matrix2x2.multiply(R, currentM);
+
+        const cx = rotMatch[3] !== undefined ? parseInt(rotMatch[3], 10) : currentX;
+        const cy = rotMatch[4] !== undefined ? parseInt(rotMatch[4], 10) : currentY;
+
+        const dx = currentX - cx;
+        const dy = currentY - cy;
+
+        const normAngle = ((effectiveAngle % 360) + 360) % 360;
+        let rDx = dx, rDy = dy;
+        if (normAngle === 90) { 
+          rDx = -dy; rDy = dx;
+        } else if (normAngle === 180) { 
+          rDx = -dx; rDy = -dy;
+        } else if (normAngle === 270) { 
+          rDx = dy; rDy = -dx;
+        }
+
+        const targetX = cx + rDx;
+        const targetY = cy + rDy;
+
+        const dirLabel = effectiveAngle < 0 ? 'CW' : 'CCW';
+        const isPointRot = (cx !== currentX || cy !== currentY);
+        const notation = isPointRot 
+          ? `rotate ${Math.abs(deg)}° ${dirLabel} about (${cx},${cy})`
+          : `rotate ${Math.abs(deg)}° ${dirLabel}`;
+
+        return {
+          type: 'rotation',
+          deg: Math.abs(deg),
+          dir: dirLabel,
+          aboutX: cx,
+          aboutY: cy,
+          targetX,
+          targetY,
+          targetM: newM,
+          notation
+        };
+      }
+
+      // 3. TRANSLATIONS
+      const transXYMatch = str.match(/^\(?\s*x\s*([+-]\s*\d+)?\s*,\s*y\s*([+-]\s*\d+)?\s*\)?$/i);
+      if (transXYMatch) {
+        const dxStr = transXYMatch[1] ? transXYMatch[1].replace(/\s+/g, '') : '0';
+        const dyStr = transXYMatch[2] ? transXYMatch[2].replace(/\s+/g, '') : '0';
+        const dx = parseInt(dxStr, 10);
+        const dy = parseInt(dyStr, 10);
+
+        return {
+          type: 'translation',
+          dx, dy,
+          targetX: currentX + dx,
+          targetY: currentY + dy,
+          targetM: currentM,
+          notation: `(${dx >= 0 ? 'x+'+dx : 'x'+dx}, ${dy >= 0 ? 'y+'+dy : 'y'+dy})`
+        };
+      }
+
+      const transDirectMatch = str.match(/^(?:translate\s*)?\(?\s*([+-]?\d+)\s*,\s*([+-]?\d+)\s*\)?$/i);
+      if (transDirectMatch) {
+        const dx = parseInt(transDirectMatch[1], 10);
+        const dy = parseInt(transDirectMatch[2], 10);
+
+        return {
+          type: 'translation',
+          dx, dy,
+          targetX: currentX + dx,
+          targetY: currentY + dy,
+          targetM: currentM,
+          notation: `translate (${dx}, ${dy})`
+        };
+      }
+
+      // 4. REFLECTIONS
+      const refXMatch = str.match(/^(?:reflect|r)\s*(?:across\s+|in\s+|line\s+)?x\s*=\s*([+-]?\d+)$/i) || str.match(/^rx\s*=\s*([+-]?\d+)$/i);
+      if (refXMatch) {
+        const c = parseInt(refXMatch[1], 10);
+        const newX = 2 * c - currentX;
+        const T = Matrix2x2.reflectionX();
+        const newM = Matrix2x2.multiply(T, currentM);
+
+        return {
+          type: 'reflection',
+          lineType: 'x=k',
+          lineVal: c,
+          targetX: newX,
+          targetY: currentY,
+          targetM: newM,
+          notation: `reflect x=${c}`
+        };
+      }
+
+      const refYMatch = str.match(/^(?:reflect|r)\s*(?:across\s+|in\s+|line\s+)?y\s*=\s*([+-]?\d+)$/i) || str.match(/^ry\s*=\s*([+-]?\d+)$/i);
+      if (refYMatch) {
+        const c = parseInt(refYMatch[1], 10);
+        const newY = 2 * c - currentY;
+        const T = Matrix2x2.reflectionY();
+        const newM = Matrix2x2.multiply(T, currentM);
+
+        return {
+          type: 'reflection',
+          lineType: 'y=k',
+          lineVal: c,
+          targetX: currentX,
+          targetY: newY,
+          targetM: newM,
+          notation: `reflect y=${c}`
+        };
+      }
+
+      if (/^(?:reflect|r)\s*(?:across\s+|in\s+|line\s+)?(?:x-?axis)$/i.test(str)) {
+        const T = Matrix2x2.reflectionY();
+        return {
+          type: 'reflection',
+          lineType: 'y=k',
+          lineVal: 0,
+          targetX: currentX,
+          targetY: -currentY,
+          targetM: Matrix2x2.multiply(T, currentM),
+          notation: 'reflect y=0'
+        };
+      }
+
+      if (/^(?:reflect|r)\s*(?:across\s+|in\s+|line\s+)?(?:y-?axis)$/i.test(str)) {
+        const T = Matrix2x2.reflectionX();
+        return {
+          type: 'reflection',
+          lineType: 'x=k',
+          lineVal: 0,
+          targetX: -currentX,
+          targetY: currentY,
+          targetM: Matrix2x2.multiply(T, currentM),
+          notation: 'reflect x=0'
+        };
+      }
+
+      if (/^(?:reflect|r)\s*(?:across\s+|in\s+|line\s+)?y\s*=\s*x$/i.test(str)) {
+        const T = Matrix2x2.reflectionYX();
+        return {
+          type: 'reflection',
+          lineType: 'y=x',
+          targetX: currentY,
+          targetY: currentX,
+          targetM: Matrix2x2.multiply(T, currentM),
+          notation: 'reflect y=x'
+        };
+      }
+
+      if (/^(?:reflect|r)\s*(?:across\s+|in\s+|line\s+)?y\s*=\s*-x$/i.test(str)) {
+        const T = Matrix2x2.reflectionYNegX();
+        return {
+          type: 'reflection',
+          lineType: 'y=-x',
+          targetX: -currentY,
+          targetY: -currentX,
+          targetM: Matrix2x2.multiply(T, currentM),
+          notation: 'reflect y=-x'
+        };
+      }
+
+      return null;
+    }
+
+    /* Main Game Engine Class */
+    class GameEngine {
+      constructor() {
+        this.canvas = document.getElementById('game-canvas');
+        this.ctx = this.canvas.getContext('2d');
+
+        this.currentLevelId = null;
+        this.levelStates = { 1: null, 2: null, 3: null, 4: null };
+
+        this.STORAGE_KEY = 'mspacman_transformations_save_data_v2';
+
+        this.score = 0;
+        this.showGameOver = false;
+        this.ghostsPurple = false;
+        this.activeGhosts = [];
+
+        // Player State
+        this.x = 0;
+        this.y = -9;
+        this.scale = 1.0;
+        this.matrix = Matrix2x2.identity();
+
+        this.preX = 0;
+        this.preY = -9;
+        this.preScale = 1.0;
+        this.preMatrix = Matrix2x2.identity();
+
+        // Animation state
+        this.animating = false;
+        this.animProgress = 1;
+        this.animStartPos = { x: 0, y: -9, matrix: Matrix2x2.identity(), scale: 1.0 };
+        this.animTargetPos = { x: 0, y: -9, matrix: Matrix2x2.identity(), scale: 1.0 };
+        this.activeTransformation = null;
+
+        // Replay Mode State
+        this.isReplayActive = false;
+        this.replayStep = 0;
+        this.replayPlaying = false;
+        this.replayTimer = 0.0;
+        this.replayDelayMax = 5.0;
+        this.replayAnimProgress = 1.0;
+        this.replayAnimStart = null;
+        this.replayAnimTarget = null;
+        this.lastTimestamp = null;
+
+        // Mouth Animation
+        this.mouthOpen = 0.25;
+        this.mouthSpeed = 0.02;
+
+        this.pellets = [];
+        this.fruits = [];
+        this.history = [];
+
+        this.initEventListeners();
+        
+        // Attempt restoring from Local Storage
+        const restored = this.loadFromLocalStorage();
+        if (!restored) {
+          this.loadLevel(1);
+        }
+
+        this.resizeCanvas();
+
+        window.addEventListener('resize', () => this.resizeCanvas());
+        requestAnimationFrame((t) => this.renderLoop(t));
+      }
+
+      /* LOCAL STORAGE PERSISTENCE METHODS */
+      saveToLocalStorage() {
+        try {
+          this.saveCurrentLevelState();
+          const payload = {
+            currentLevelId: this.currentLevelId,
+            levelStates: this.levelStates,
+            timestamp: Date.now()
+          };
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(payload));
+          
+          const ind = document.getElementById('btn-save-indicator');
+          if (ind) {
+            ind.classList.add('glow-yellow');
+            setTimeout(() => ind.classList.remove('glow-yellow'), 500);
+          }
+        } catch (e) {
+          console.warn("Could not save to localStorage:", e);
+        }
+      }
+
+      loadFromLocalStorage() {
+        try {
+          const raw = localStorage.getItem(this.STORAGE_KEY);
+          if (!raw) return false;
+
+          const data = JSON.parse(raw);
+          if (!data || !data.currentLevelId || !data.levelStates) return false;
+
+          this.levelStates = data.levelStates;
+          this.loadLevel(data.currentLevelId, false);
+          this.showFeedback(`Restored saved progress for Level ${this.currentLevelId}!`, "success");
+          return true;
+        } catch (e) {
+          console.warn("Error loading state from localStorage:", e);
+          return false;
+        }
+      }
+
+      resizeCanvas() {
+        const container = document.getElementById('canvas-container');
+        const rect = container.getBoundingClientRect();
+        this.canvas.width = rect.width * (window.devicePixelRatio || 1);
+        this.canvas.height = rect.height * (window.devicePixelRatio || 1);
+      }
+
+      isGhostBlocking(gx, gy) {
+        if (this.currentLevelId === 3 || this.currentLevelId === 4) {
+          return this.activeGhosts.some(g => !g.removed && g.x === gx && g.y === gy);
+        }
+        return false;
+      }
+
+      generateDots() {
+        this.pellets = [];
+        const powerCoords = [
+          { x: -12, y: 11 }, { x: 13, y: 11 },
+          { x: -12, y: -13 }, { x: 13, y: -13 }
+        ];
+
+        const activeFruits = LEVEL_FRUITS[this.currentLevelId] || [];
+
+        let index = 0;
+        for (let gx = -13; gx <= 14; gx++) {
+          for (let gy = -15; gy <= 13; gy++) {
+            if (gx === 0 && gy === -9) continue;
+
+            if (activeFruits.some(f => f.x === gx && f.y === gy)) {
+              continue;
+            }
+
+            if (!isDotRemovingWall(gx, gy)) {
+              const isPower = powerCoords.some(p => p.x === gx && p.y === gy);
+              this.pellets.push({
+                id: index++,
+                x: gx,
+                y: gy,
+                eaten: false,
+                isPower
+              });
+            }
+          }
+        }
+      }
+
+      triggerGameOver(msg) {
+        this.exitReplay();
+        this.showGameOver = true;
+        const modal = document.getElementById('game-over-modal');
+        const desc = document.getElementById('game-over-desc');
+        const title = document.getElementById('game-over-level-title');
+        if (title) {
+          title.innerText = `GHOST COLLISION - LEVEL ${this.currentLevelId}`;
+        }
+        if (desc) {
+          desc.innerText = msg || "Ms. Pac-Man attempted to pass through or land on a ghost!";
+        }
+        if (modal) {
+          modal.classList.remove('hidden');
+        }
+        this.saveToLocalStorage();
+      }
+
+      saveCurrentLevelState() {
+        if (!this.currentLevelId) return;
+        this.levelStates[this.currentLevelId] = {
+          x: this.x,
+          y: this.y,
+          scale: this.scale,
+          matrix: this.matrix,
+          preX: this.preX,
+          preY: this.preY,
+          preScale: this.preScale,
+          preMatrix: this.preMatrix,
+          score: this.score,
+          pellets: JSON.parse(JSON.stringify(this.pellets)),
+          fruits: JSON.parse(JSON.stringify(this.fruits)),
+          activeGhosts: JSON.parse(JSON.stringify(this.activeGhosts)),
+          history: JSON.parse(JSON.stringify(this.history)),
+          ghostsPurple: this.ghostsPurple,
+          showGameOver: this.showGameOver
+        };
+      }
+
+      loadLevel(levelId, forceReset = false) {
+        if (this.currentLevelId && this.currentLevelId !== levelId) {
+          this.saveCurrentLevelState();
+        }
+
+        this.exitReplay();
+        this.currentLevelId = levelId;
+
+        const modal = document.getElementById('game-over-modal');
+        if (modal) modal.classList.add('hidden');
+
+        const resetModal = document.getElementById('reset-confirm-modal');
+        if (resetModal) resetModal.classList.add('hidden');
+
+        const levelSelect = document.getElementById('level-select');
+        if (levelSelect && parseInt(levelSelect.value, 10) !== levelId) {
+          levelSelect.value = levelId;
+        }
+
+        const fruitLegend = document.getElementById('fruit-legend');
+        if (levelId === 2 || levelId === 3 || levelId === 4) {
+          fruitLegend.classList.remove('hidden');
+        } else {
+          fruitLegend.classList.add('hidden');
+        }
+
+        if (!forceReset && this.levelStates[levelId]) {
+          const saved = this.levelStates[levelId];
+          this.x = saved.x;
+          this.y = saved.y;
+          this.scale = saved.scale;
+          this.matrix = saved.matrix;
+          this.preX = saved.preX;
+          this.preY = saved.preY;
+          this.preScale = saved.preScale;
+          this.preMatrix = saved.preMatrix;
+          this.score = saved.score;
+          this.pellets = saved.pellets;
+          this.fruits = saved.fruits;
+          this.activeGhosts = saved.activeGhosts;
+          this.history = saved.history;
+          this.ghostsPurple = saved.ghostsPurple;
+          this.showGameOver = saved.showGameOver;
+          this.animating = false;
+
+          if (this.showGameOver) {
+            this.triggerGameOver();
+          }
+
+          this.updateHUD();
+          this.renderHistory();
+          this.showFeedback(`Loaded Level ${levelId} saved state.`, "info");
+          this.saveToLocalStorage();
+          return;
+        }
+
+        this.showGameOver = false;
+        this.ghostsPurple = false;
+
+        if (levelId === 3 || levelId === 4) {
+          this.activeGhosts = MAP_GHOSTS.map(g => ({ ...g, removed: false }));
+        } else {
+          this.activeGhosts = [];
+        }
+
+        const cfg = LEVELS[levelId];
+
+        this.x = cfg.startX;
+        this.y = cfg.startY;
+        this.scale = 1.0;
+        this.matrix = Matrix2x2.identity();
+
+        this.preX = cfg.startX;
+        this.preY = cfg.startY;
+        this.preScale = 1.0;
+        this.preMatrix = Matrix2x2.identity();
+
+        if (LEVEL_FRUITS[levelId]) {
+          this.fruits = LEVEL_FRUITS[levelId].map(f => ({ ...f, eaten: false }));
+        } else {
+          this.fruits = [];
+        }
+
+        this.generateDots();
+
+        this.history = [];
+        this.score = 0;
+        this.animating = false;
+
+        this.eatDotsAlongPath([{ x: this.x, y: this.y }]);
+        this.saveToLocalStorage();
+        this.updateHUD();
+        this.renderHistory();
+        this.showFeedback(`Level ${levelId} initialized. Enter a transformation command!`, "success");
+      }
+
+      resetCurrentLevel() {
+        this.levelStates[this.currentLevelId] = null;
+        this.loadLevel(this.currentLevelId, true);
+      }
+
+      eatDotsAlongPath(pathPoints) {
+        const eatenList = [];
+        let scoreGained = 0;
+
+        pathPoints.forEach(pt => {
+          this.pellets.forEach(p => {
+            if (!p.eaten && p.x === pt.x && p.y === pt.y) {
+              p.eaten = true;
+              const pts = p.isPower ? 2 : 1;
+              scoreGained += pts;
+              if ((this.currentLevelId === 3 || this.currentLevelId === 4) && p.isPower) {
+                this.ghostsPurple = true;
+              }
+              eatenList.push({ type: 'pellet', id: p.id, x: p.x, y: p.y, isPower: p.isPower, pts });
+            }
+          });
+
+          if (this.fruits) {
+            this.fruits.forEach((f, idx) => {
+              if (!f.eaten && f.x === pt.x && f.y === pt.y) {
+                f.eaten = true;
+                scoreGained += f.pts;
+                eatenList.push({ type: 'fruit', index: idx, x: f.x, y: f.y, pts: f.pts });
+              }
+            });
+          }
+        });
+
+        if (scoreGained > 0) {
+          this.score += scoreGained;
+          audio.playWaka();
+        }
+
+        return { eatenList, scoreGained };
+      }
+
+      executeCommand(cmdStr) {
+        if (this.animating || this.showGameOver) return;
+        if (this.isReplayActive) this.exitReplay();
+
+        const levelCfg = LEVELS[this.currentLevelId];
+
+        if (levelCfg.maxMoves && this.history.length >= levelCfg.maxMoves) {
+          audio.playError();
+          this.showFeedback(`Move Limit Reached! Level ${this.currentLevelId} is capped at ${levelCfg.maxMoves} moves. Reset or Undo to try again!`, "error");
+          return;
+        }
+
+        const parsed = parseTransformation(cmdStr, this.x, this.y, this.matrix);
+
+        if (!parsed) {
+          audio.playError();
+          this.showFeedback(`Syntax Error! Could not parse '${cmdStr}'. Try (x-2, y), reflect y=${this.y}, rotate 90 cw, or 2(x,y).`, "error");
+          return;
+        }
+
+        if (parsed.error) {
+          audio.playError();
+          this.showFeedback(parsed.error, "error");
+          return;
+        }
+
+        if (parsed.type === 'rotation') {
+          if (this.currentLevelId === 1 || this.currentLevelId === 2 || this.currentLevelId === 3) {
+            if (parsed.aboutX !== this.x || parsed.aboutY !== this.y) {
+              audio.playError();
+              this.showFeedback(`Rotation Constraint! On Levels 1, 2, and 3, rotations are only allowed at Ms. Pac-Man's current location (${this.x}, ${this.y}).`, "error");
+              return;
+            }
+          }
+        }
+
+        if (parsed.type === 'reflection') {
+          if (this.currentLevelId === 1 || this.currentLevelId === 2 || this.currentLevelId === 3) {
+            const isAxisX = (parsed.lineType === 'x=k' && parsed.lineVal === this.x);
+            const isAxisY = (parsed.lineType === 'y=k' && parsed.lineVal === this.y);
+            if (!isAxisX && !isAxisY) {
+              audio.playError();
+              this.showFeedback(`Reflection Constraint! On Levels 1, 2, and 3, reflections are only allowed on an axis matching Ms. Pac-Man's current x or y position (x=${this.x} or y=${this.y}).`, "error");
+              return;
+            }
+          }
+        }
+
+        if (parsed.type === 'rotation' || parsed.type === 'reflection') {
+          if (isBlockingWall(parsed.targetX, parsed.targetY)) {
+            audio.playError();
+            const isGhostHouse = (parsed.targetX >= -3 && parsed.targetX <= 4 && parsed.targetY >= -2 && parsed.targetY <= 2);
+            const label = isGhostHouse ? 'the ghost house' : 'a maze wall';
+            this.showFeedback(`Wall Collision! Transformation lands Ms. Pac-Man on ${label} at (${parsed.targetX}, ${parsed.targetY}).`, "error");
+            return;
+          }
+        }
+
+        const { bx, by } = Matrix2x2.getBowVector(this.matrix);
+
+        if (parsed.type === 'translation' && by < 0) {
+          audio.playError();
+          this.showFeedback(`Upside Down Constraint! Ms. Pac-Man is upside down. Reflect or rotate her upright before moving!`, "error");
+          return;
+        }
+
+        let visitedPath = [{ x: this.x, y: this.y }];
+        const preGhostsPurple = this.ghostsPurple;
+        let isTeleported = false;
+        let ghostBonusPoints = 0;
+        let ghostHitsCount = 0;
+        let removedGhostsThisTurn = [];
+
+        if (parsed.type === 'translation') {
+          const { fx, fy } = Matrix2x2.getFacingVector(this.matrix);
+          const facingName = Matrix2x2.getFacingName(this.matrix);
+
+          let moveDx = parsed.targetX - this.x;
+          let moveDy = parsed.targetY - this.y;
+
+          if (moveDx === 0 && moveDy === 0) {
+            audio.playError();
+            this.showFeedback(`No movement detected in translation command.`, "error");
+            return;
+          }
+
+          if (moveDx !== 0 && moveDy !== 0) {
+            audio.playError();
+            this.showFeedback(`Invalid Move! Ms. Pac-Man can only move straight in one direction along paths.`, "error");
+            return;
+          }
+
+          let neededDirection = '';
+          let isValidFacing = false;
+
+          if (moveDx < 0 && moveDy === 0) {
+            neededDirection = 'LEFT';
+            isValidFacing = (fx === -1 && fy === 0);
+          } else if (moveDx > 0 && moveDy === 0) {
+            neededDirection = 'RIGHT';
+            isValidFacing = (fx === 1 && fy === 0);
+          } else if (moveDy > 0 && moveDx === 0) {
+            neededDirection = 'UP';
+            isValidFacing = (fx === 0 && fy === 1);
+            
+            if (levelCfg.enforceBow && isValidFacing && bx !== -1) {
+              audio.playError();
+              this.showFeedback(`Bow Constraint! To move UP in Level 1, Ms. Pac-Man's bow must be on her LEFT side. Reflect or rotate her first!`, "error");
+              return;
+            }
+          } else if (moveDy < 0 && moveDx === 0) {
+            neededDirection = 'DOWN';
+            isValidFacing = (fx === 0 && fy === -1);
+
+            if (levelCfg.enforceBow && isValidFacing && bx !== 1) {
+              audio.playError();
+              this.showFeedback(`Bow Constraint! To move DOWN in Level 1, Ms. Pac-Man's bow must be on her RIGHT side. Reflect or rotate her first!`, "error");
+              return;
+            }
+          }
+
+          if (!isValidFacing) {
+            audio.playError();
+            this.showFeedback(`Facing Constraint! Ms. Pac-Man is currently facing ${facingName}. Rotate or reflect her to face ${neededDirection} before moving!`, "error");
+            return;
+          }
+
+          let currentSimX = this.x;
+          let currentSimY = this.y;
+          const stepX = Math.sign(moveDx);
+          const stepY = Math.sign(moveDy);
+          let totalSteps = Math.abs(moveDx) + Math.abs(moveDy);
+
+          for (let i = 0; i < totalSteps; i++) {
+            let nextX = currentSimX + stepX;
+            let nextY = currentSimY + stepY;
+
+            if (nextY === 1 || nextY === -2) {
+              if (currentSimX === -13 && stepX === -1) {
+                nextX = 14;
+                isTeleported = true;
+              } else if (currentSimX === 14 && stepX === 1) {
+                nextX = -13;
+                isTeleported = true;
+              }
+            }
+
+            if (this.currentLevelId === 3 || this.currentLevelId === 4) {
+              const pPellet = this.pellets.find(p => !p.eaten && p.x === nextX && p.y === nextY && p.isPower);
+              if (pPellet) {
+                this.ghostsPurple = true;
+              }
+            }
+
+            if (this.isGhostBlocking(nextX, nextY)) {
+              if ((this.currentLevelId === 3 || this.currentLevelId === 4) && this.ghostsPurple) {
+                const hitGhost = this.activeGhosts.find(g => !g.removed && g.x === nextX && g.y === nextY);
+                if (hitGhost) {
+                  hitGhost.removed = true;
+                  removedGhostsThisTurn.push(hitGhost);
+                  ghostBonusPoints += 100;
+                  ghostHitsCount++;
+                }
+              } else {
+                audio.playError();
+                if (this.currentLevelId === 3 || this.currentLevelId === 4) {
+                  this.triggerGameOver(`Ghost Collision! Ms. Pac-Man tried to pass through or land on a ghost at (${nextX}, ${nextY}).`);
+                  this.showFeedback(`Ghost Collision! Ms. Pac-Man hit a ghost at (${nextX}, ${nextY}). Click Confirm to reset level.`, "error");
+                } else {
+                  this.showFeedback(`Ghost Collision! Path blocked by a ghost at coordinate (${nextX}, ${nextY}).`, "error");
+                }
+                return;
+              }
+            }
+
+            if (isBlockingWall(nextX, nextY)) {
+              audio.playError();
+              const isGhostHouse = (nextX >= -3 && nextX <= 4 && nextY >= -2 && nextY <= 2);
+              const label = isGhostHouse ? 'the ghost house' : 'a maze wall';
+              this.showFeedback(`Wall Collision! Path blocked by ${label} at coordinate (${nextX}, ${nextY}).`, "error");
+              return;
+            }
+
+            currentSimX = nextX;
+            currentSimY = nextY;
+            visitedPath.push({ x: currentSimX, y: currentSimY });
+          }
+
+          parsed.targetX = currentSimX;
+          parsed.targetY = currentSimY;
+        } else {
+          if (this.isGhostBlocking(parsed.targetX, parsed.targetY)) {
+            if ((this.currentLevelId === 3 || this.currentLevelId === 4) && this.ghostsPurple) {
+              const hitGhost = this.activeGhosts.find(g => !g.removed && g.x === parsed.targetX && g.y === parsed.targetY);
+              if (hitGhost) {
+                hitGhost.removed = true;
+                removedGhostsThisTurn.push(hitGhost);
+                ghostBonusPoints += 100;
+                ghostHitsCount++;
+              }
+            } else {
+              audio.playError();
+              if (this.currentLevelId === 3 || this.currentLevelId === 4) {
+                this.triggerGameOver(`Ghost Collision! Target position (${parsed.targetX}, ${parsed.targetY}) is blocked by a ghost.`);
+                this.showFeedback(`Ghost Collision! Target position (${parsed.targetX}, ${parsed.targetY}) is blocked by a ghost. Click Confirm to reset level.`, "error");
+              } else {
+                this.showFeedback(`Ghost Collision! Target position (${parsed.targetX}, ${parsed.targetY}) is blocked by a ghost.`, "error");
+              }
+              return;
+            }
+          }
+
+          visitedPath.push({ x: parsed.targetX, y: parsed.targetY });
+        }
+
+        audio.playSwoosh();
+        this.preX = this.x;
+        this.preY = this.y;
+        this.preScale = this.scale;
+        this.preMatrix = this.matrix;
+
+        const { eatenList, scoreGained: dotsScore } = this.eatDotsAlongPath(visitedPath);
+        const totalScoreGained = dotsScore + ghostBonusPoints;
+        if (ghostBonusPoints > 0) {
+          this.score += ghostBonusPoints;
+        }
+
+        const newScale = (parsed.type === 'dilation') ? parsed.scale : this.scale;
+
+        if (isTeleported) {
+          this.animating = false;
+          this.animProgress = 1;
+          this.activeTransformation = null;
+        } else {
+          this.animStartPos = { x: this.x, y: this.y, matrix: this.matrix, scale: this.scale };
+          this.animTargetPos = { x: parsed.targetX, y: parsed.targetY, matrix: parsed.targetM, scale: newScale };
+          this.activeTransformation = parsed;
+          this.animating = true;
+          this.animProgress = 0;
+        }
+
+        this.history.unshift({
+          fromX: this.x,
+          fromY: this.y,
+          fromScale: this.scale,
+          fromMatrix: this.matrix,
+          toX: parsed.targetX,
+          toY: parsed.targetY,
+          toScale: newScale,
+          toMatrix: parsed.targetM,
+          notation: parsed.notation,
+          type: parsed.type,
+          eatenDots: eatenList,
+          scoreGained: totalScoreGained,
+          ghostBonusPoints,
+          removedGhosts: removedGhostsThisTurn,
+          ghostsPurpleBefore: preGhostsPurple,
+          ghostsPurpleAfter: this.ghostsPurple
+        });
+
+        this.x = parsed.targetX;
+        this.y = parsed.targetY;
+        this.scale = newScale;
+        this.matrix = parsed.targetM;
+
+        this.saveToLocalStorage();
+
+        let feedbackText = `Applied: ${parsed.notation} ➔ Pos: (${this.x}, ${this.y}) | Facing: ${Matrix2x2.getFacingName(this.matrix)}`;
+        if (parsed.type === 'dilation') {
+          feedbackText += ` | Size Scale: ${this.scale}x`;
+        }
+        if (ghostHitsCount > 0) {
+          feedbackText += ` | +${ghostBonusPoints} pts! Ghost removed from map.`;
+        }
+        if (this.ghostsPurple && !preGhostsPurple) {
+          feedbackText += ` 🍇 Ghosts turned PURPLE!`;
+        }
+
+        this.updateHUD();
+        this.renderHistory();
+        this.showFeedback(feedbackText, "success");
+      }
+
+      undoStep() {
+        if (this.history.length === 0 || this.animating) return;
+        if (this.isReplayActive) this.exitReplay();
+        this.showGameOver = false;
+
+        const modal = document.getElementById('game-over-modal');
+        if (modal) modal.classList.add('hidden');
+
+        audio.playUndo();
+        const lastStep = this.history.shift();
+
+        this.x = lastStep.fromX;
+        this.y = lastStep.fromY;
+        this.scale = lastStep.fromScale || 1.0;
+        this.matrix = lastStep.fromMatrix;
+        if (lastStep.ghostsPurpleBefore !== undefined) {
+          this.ghostsPurple = lastStep.ghostsPurpleBefore;
+        }
+
+        if (lastStep.removedGhosts && lastStep.removedGhosts.length > 0) {
+          lastStep.removedGhosts.forEach(g => {
+            g.removed = false;
+          });
+        }
+
+        lastStep.eatenDots.forEach(eaten => {
+          if (eaten.type === 'fruit') {
+            if (this.fruits && this.fruits[eaten.index]) {
+              this.fruits[eaten.index].eaten = false;
+            }
+          } else {
+            const pellet = this.pellets.find(p => p.id === eaten.id);
+            if (pellet) pellet.eaten = false;
+          }
+        });
+
+        this.score -= lastStep.scoreGained;
+        if (this.score < 0) this.score = 0;
+
+        this.saveToLocalStorage();
+        this.updateHUD();
+        this.renderHistory();
+        this.showFeedback(`Undid step! Returned to (${this.x}, ${this.y}) | Facing: ${Matrix2x2.getFacingName(this.matrix)}`, "info");
+      }
+
+      /* REPLAY SYSTEM METHODS */
+      getChronologicalStates() {
+        const levelCfg = LEVELS[this.currentLevelId];
+        const states = [{
+          x: levelCfg.startX,
+          y: levelCfg.startY,
+          matrix: Matrix2x2.identity(),
+          scale: 1.0,
+          notation: 'Start Position'
+        }];
+
+        const chronologicalHistory = [...this.history].reverse();
+        chronologicalHistory.forEach(step => {
+          states.push({
+            x: step.toX,
+            y: step.toY,
+            matrix: step.toMatrix,
+            scale: step.toScale || 1.0,
+            notation: step.notation
+          });
+        });
+
+        return states;
+      }
+
+      getGhostPosition() {
+        const states = this.getChronologicalStates();
+        if (!this.replayAnimStart || !this.replayAnimTarget) {
+          return states[this.replayStep] || { x: this.x, y: this.y, matrix: this.matrix, scale: this.scale };
+        }
+
+        const t = Math.min(1.0, Math.max(0.0, this.replayAnimProgress));
+        const gx = this.replayAnimStart.x + (this.replayAnimTarget.x - this.replayAnimStart.x) * t;
+        const gy = this.replayAnimStart.y + (this.replayAnimTarget.y - this.replayAnimStart.y) * t;
+        const gs = (1 - t) * (this.replayAnimStart.scale || 1.0) + t * (this.replayAnimTarget.scale || 1.0);
+
+        const m00 = (1 - t) * this.replayAnimStart.matrix[0][0] + t * this.replayAnimTarget.matrix[0][0];
+        const m01 = (1 - t) * this.replayAnimStart.matrix[0][1] + t * this.replayAnimTarget.matrix[0][1];
+        const m10 = (1 - t) * this.replayAnimStart.matrix[1][0] + t * this.replayAnimTarget.matrix[1][0];
+        const m11 = (1 - t) * this.replayAnimStart.matrix[1][1] + t * this.replayAnimTarget.matrix[1][1];
+
+        return { x: gx, y: gy, scale: gs, matrix: [[m00, m01], [m10, m11]] };
+      }
+
+      startReplay() {
+        if (this.history.length === 0 || this.animating) return;
+        audio.playSwoosh();
+        this.isReplayActive = true;
+        this.replayPlaying = true;
+        this.replayStep = 0;
+        
+        const states = this.getChronologicalStates();
+        this.replayAnimStart = states[0];
+        this.replayAnimTarget = states[0];
+        this.replayAnimProgress = 1.0;
+        this.replayTimer = 0.0;
+
+        this.updateReplayUI();
+        this.showFeedback("Ghost Replay started! Retracing steps with 5-second delay per step.", "info");
+      }
+
+      exitReplay() {
+        if (!this.isReplayActive) return;
+        this.isReplayActive = false;
+        this.replayPlaying = false;
+        this.updateReplayUI();
+        this.showFeedback("Exited Ghost Replay mode.", "info");
+      }
+
+      toggleReplayPlay() {
+        if (!this.isReplayActive) return;
+        const states = this.getChronologicalStates();
+        if (!this.replayPlaying && this.replayStep >= states.length - 1) {
+          this.goToReplayStep(0);
+        } else {
+          this.replayPlaying = !this.replayPlaying;
+        }
+        this.updateReplayUI();
+      }
+
+      goToReplayStep(targetIndex) {
+        if (!this.isReplayActive) return;
+        const states = this.getChronologicalStates();
+        targetIndex = Math.max(0, Math.min(targetIndex, states.length - 1));
+
+        audio.playSwoosh();
+        this.replayAnimStart = this.getGhostPosition();
+        this.replayStep = targetIndex;
+        this.replayAnimTarget = states[targetIndex];
+        this.replayAnimProgress = 0.0;
+        this.replayTimer = 0.0;
+
+        this.updateReplayUI();
+      }
+
+      updateReplayUI() {
+        const startBtn = document.getElementById('btn-start-replay');
+        const controls = document.getElementById('replay-controls');
+        const badge = document.getElementById('replay-badge');
+        const playIcon = document.getElementById('icon-replay-play');
+        const stepInfo = document.getElementById('replay-step-info');
+        const delayTimer = document.getElementById('replay-delay-timer');
+
+        if (startBtn) {
+          startBtn.disabled = (this.history.length === 0 || this.isReplayActive);
+        }
+
+        if (this.isReplayActive) {
+          if (controls) controls.classList.remove('hidden');
+          if (badge) badge.classList.remove('hidden');
+
+          if (playIcon) {
+            playIcon.className = this.replayPlaying ? 'fa-solid fa-pause text-xs' : 'fa-solid fa-play text-xs';
+          }
+
+          const states = this.getChronologicalStates();
+          if (stepInfo) {
+            stepInfo.innerText = `Step ${this.replayStep + 1} / ${states.length}`;
+          }
+
+          if (delayTimer) {
+            if (!this.replayPlaying) {
+              delayTimer.innerText = 'PAUSED';
+            } else {
+              const remaining = Math.max(0, 5.0 - this.replayTimer);
+              delayTimer.innerText = `⏱️ ${remaining.toFixed(1)}s`;
+            }
+          }
+        } else {
+          if (controls) controls.classList.add('hidden');
+          if (badge) badge.classList.add('hidden');
+        }
+
+        this.updateHistoryHighlight();
+      }
+
+      updateHistoryHighlight() {
+        const historyList = document.getElementById('history-list');
+        if (!historyList) return;
+
+        const items = historyList.querySelectorAll('[data-step-index]');
+        items.forEach(item => {
+          const stepIdx = parseInt(item.getAttribute('data-step-index'), 10);
+          const badge = item.querySelector('.replay-indicator');
+
+          if (this.isReplayActive && stepIdx === this.replayStep) {
+            item.classList.add('border-cyan-400', 'bg-cyan-950/90', 'ring-2', 'ring-cyan-400/60', 'glow-cyan');
+            item.classList.remove('border-slate-800', 'bg-slate-950/60');
+            if (badge) badge.classList.remove('hidden');
+
+            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } else {
+            item.classList.remove('border-cyan-400', 'bg-cyan-950/90', 'ring-2', 'ring-cyan-400/60', 'glow-cyan');
+            item.classList.add('border-slate-800', 'bg-slate-950/60');
+            if (badge) badge.classList.add('hidden');
+          }
+        });
+      }
+
+      gridToPixel(gx, gy) {
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+        const marginX = 28 * (window.devicePixelRatio || 1);
+        const marginY = 28 * (window.devicePixelRatio || 1);
+        const usableW = w - marginX * 2;
+        const usableH = h - marginY * 2;
+
+        const px = marginX + ((gx - (-13)) / 27) * usableW;
+        const py = marginY + ((13 - gy) / 28) * usableH;
+        return { px, py, scale: usableW / 27 };
+      }
+
+      renderLoop(timestamp) {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        if (!this.lastTimestamp) this.lastTimestamp = timestamp;
+        const dt = Math.min((timestamp - this.lastTimestamp) / 1000, 0.1);
+        this.lastTimestamp = timestamp;
+
+        this.mouthOpen += this.mouthSpeed;
+        if (this.mouthOpen > 0.38 || this.mouthOpen < 0.08) {
+          this.mouthSpeed = -this.mouthSpeed;
+        }
+
+        if (this.animating) {
+          this.animProgress += 0.05;
+          if (this.animProgress >= 1) {
+            this.animProgress = 1;
+            this.animating = false;
+          }
+        }
+
+        if (this.isReplayActive) {
+          const states = this.getChronologicalStates();
+
+          if (this.replayAnimProgress < 1.0) {
+            this.replayAnimProgress += dt / 0.7;
+            if (this.replayAnimProgress >= 1.0) {
+              this.replayAnimProgress = 1.0;
+              this.replayTimer = 0.0;
+            }
+          } else if (this.replayPlaying) {
+            if (this.replayStep < states.length - 1) {
+              this.replayTimer += dt;
+              if (this.replayTimer >= 5.0) {
+                this.goToReplayStep(this.replayStep + 1);
+              }
+            } else {
+              this.replayPlaying = false;
+            }
+          }
+          this.updateReplayUI();
+        }
+
+        this.drawBackgroundAndGridLines();
+        this.drawWallObstacles();
+        this.drawGhostHouse();
+        this.drawAxesAndNumbers();
+        this.drawPellets();
+        this.drawFruits();
+
+        if (this.isReplayActive) {
+          this.drawReplayTrail();
+          this.drawMsPacMan(0.35);
+          const ghostPos = this.getGhostPosition();
+          this.drawGhostedMsPacMan(ghostPos.x, ghostPos.y, ghostPos.matrix, ghostPos.scale);
+        } else {
+          this.drawTransformationTrajectory();
+          this.drawPreImageGhost();
+          this.drawMsPacMan(1.0);
+        }
+
+        if (this.showGameOver) {
+          this.drawGameOverOverlay();
+        }
+
+        requestAnimationFrame((t) => this.renderLoop(t));
+      }
+
+      drawReplayTrail() {
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+        const states = this.getChronologicalStates();
+
+        if (states.length < 2) return;
+
+        ctx.save();
+        ctx.strokeStyle = '#22d3ee';
+        ctx.lineWidth = 2 * dpr;
+        ctx.setLineDash([4 * dpr, 4 * dpr]);
+
+        ctx.beginPath();
+        states.forEach((st, idx) => {
+          const pt = this.gridToPixel(st.x, st.y);
+          if (idx === 0) ctx.moveTo(pt.px, pt.py);
+          else ctx.lineTo(pt.px, pt.py);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        states.forEach((st, idx) => {
+          const pt = this.gridToPixel(st.x, st.y);
+          const isCurrent = (idx === this.replayStep);
+
+          ctx.fillStyle = isCurrent ? '#06b6d4' : '#0f172a';
+          ctx.strokeStyle = isCurrent ? '#facc15' : '#22d3ee';
+          ctx.lineWidth = (isCurrent ? 2.5 : 1.5) * dpr;
+
+          ctx.beginPath();
+          ctx.arc(pt.px, pt.py, (isCurrent ? 8 : 5) * dpr, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.font = `bold ${8 * dpr}px "Space Grotesk", sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = isCurrent ? '#ffffff' : '#38bdf8';
+          ctx.fillText((idx + 1).toString(), pt.px, pt.py);
+        });
+
+        ctx.restore();
+      }
+
+      drawGhostedMsPacMan(gx, gy, gM, gScale) {
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+        const pt = this.gridToPixel(gx, gy);
+        const S = pt.scale;
+
+        ctx.save();
+
+        const a = S * gM[0][0] * gScale;
+        const b = -S * gM[1][0] * gScale;
+        const c = S * gM[0][1] * gScale;
+        const d = -S * gM[1][1] * gScale;
+
+        ctx.transform(a, b, c, d, pt.px, pt.py);
+
+        const R = 0.6375;
+
+        ctx.shadowColor = '#06b6d4';
+        ctx.shadowBlur = 16 * dpr;
+
+        ctx.fillStyle = 'rgba(34, 211, 238, 0.65)';
+        ctx.strokeStyle = '#22d3ee';
+        ctx.lineWidth = 0.12 / gScale;
+
+        const mouthRad = this.mouthOpen;
+        const startAngle = Math.PI + mouthRad;
+        const endAngle = Math.PI - mouthRad;
+
+        ctx.beginPath();
+        ctx.arc(0, 0, R, startAngle, endAngle, false);
+        ctx.lineTo(0, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(250, 204, 21, 0.5)';
+        ctx.beginPath();
+        ctx.arc(0, 0, R * 0.82, startAngle, endAngle, false);
+        ctx.lineTo(0, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-0.18, 0.26, 0.09, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#082f49';
+        ctx.beginPath();
+        ctx.arc(-0.21, 0.28, 0.05, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#f472b6';
+        ctx.beginPath();
+        ctx.ellipse(-0.22, 0.71, 0.16, 0.09, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(0.22, 0.71, 0.16, 0.09, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+
+        ctx.save();
+        ctx.font = `bold ${8 * dpr}px "Press Start 2P", monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#22d3ee';
+        ctx.shadowColor = '#082f49';
+        ctx.shadowBlur = 6 * dpr;
+        ctx.fillText(`👻 STEP ${this.replayStep + 1}`, pt.px, pt.py - (20 * gScale * dpr));
+        ctx.restore();
+      }
+
+      drawGameOverOverlay() {
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+        const w = this.canvas.width;
+        const h = this.canvas.height;
+
+        ctx.save();
+
+        ctx.fillStyle = 'rgba(9, 13, 22, 0.75)';
+        ctx.fillRect(0, 0, w, h);
+
+        const bannerH = 110 * dpr;
+        const bannerY = (h - bannerH) / 2;
+
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+        ctx.fillRect(0, bannerY, w, bannerH);
+
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 3 * dpr;
+        ctx.shadowColor = '#ef4444';
+        ctx.shadowBlur = 10 * dpr;
+        ctx.beginPath();
+        ctx.moveTo(0, bannerY);
+        ctx.lineTo(w, bannerY);
+        ctx.moveTo(0, bannerY + bannerH);
+        ctx.lineTo(w, bannerY + bannerH);
+        ctx.stroke();
+
+        ctx.font = `bold ${22 * dpr}px "Press Start 2P", monospace`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ef4444';
+        ctx.shadowColor = '#ef4444';
+        ctx.shadowBlur = 14 * dpr;
+        ctx.fillText('GAME OVER', w / 2, bannerY + 40 * dpr);
+
+        ctx.font = `bold ${9 * dpr}px "Press Start 2P", monospace`;
+        ctx.fillStyle = '#facc15';
+        ctx.shadowColor = '#facc15';
+        ctx.shadowBlur = 6 * dpr;
+        ctx.fillText('GHOST COLLISION - CLICK CONFIRM', w / 2, bannerY + 75 * dpr);
+
+        ctx.restore();
+      }
+
+      drawBackgroundAndGridLines() {
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+
+        ctx.fillStyle = '#090d16';
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1 * dpr;
+
+        for (let gx = -14; gx <= 15; gx++) {
+          const p1 = this.gridToPixel(gx, -16);
+          const p2 = this.gridToPixel(gx, 14);
+          ctx.beginPath();
+          ctx.moveTo(p1.px, p1.py);
+          ctx.lineTo(p2.px, p2.py);
+          ctx.stroke();
+        }
+
+        for (let gy = -15; gy <= 13; gy++) {
+          const p1 = this.gridToPixel(-15, gy);
+          const p2 = this.gridToPixel(16, gy);
+          ctx.beginPath();
+          ctx.moveTo(p1.px, p1.py);
+          ctx.lineTo(p2.px, p2.py);
+          ctx.stroke();
+        }
+      }
+
+      drawAxesAndNumbers() {
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+        const origin = this.gridToPixel(0, 0);
+
+        ctx.save();
+
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2.5 * dpr;
+        ctx.shadowColor = 'rgba(0,0,0,0.8)';
+        ctx.shadowBlur = 4 * dpr;
+
+        const xStart = this.gridToPixel(-13, 0);
+        const xEnd = this.gridToPixel(14, 0);
+        ctx.beginPath();
+        ctx.moveTo(xStart.px, xStart.py);
+        ctx.lineTo(xEnd.px, xEnd.py);
+        ctx.stroke();
+
+        const yStart = this.gridToPixel(0, -15);
+        const yEnd = this.gridToPixel(0, 13);
+        ctx.beginPath();
+        ctx.moveTo(yStart.px, yStart.py);
+        ctx.lineTo(yEnd.px, yEnd.py);
+        ctx.stroke();
+
+        ctx.font = `bold ${10.5 * dpr}px "Space Grotesk", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = '#090d16';
+        ctx.lineWidth = 3 * dpr;
+
+        for (let gx = -13; gx <= 14; gx++) {
+          if (gx === 0) continue;
+          const pt = this.gridToPixel(gx, 0);
+          ctx.strokeText(gx.toString(), pt.px, origin.py + (11 * dpr));
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillText(gx.toString(), pt.px, origin.py + (11 * dpr));
+        }
+
+        for (let gy = -15; gy <= 13; gy++) {
+          if (gy === 0) continue;
+          const pt = this.gridToPixel(0, gy);
+          ctx.strokeText(gy.toString(), origin.px - (11 * dpr), pt.py);
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillText(gy.toString(), origin.px - (11 * dpr), pt.py);
+        }
+
+        ctx.restore();
+      }
+
+      drawWallObstacles() {
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+
+        WALL_RECTS.forEach(w => {
+          const type = w.type || 1;
+          if (type === 3) return;
+
+          const pTL = this.gridToPixel(w.xMin - 0, w.yMax + 0);
+          const pBR = this.gridToPixel(w.xMax + 0, w.yMin - 0);
+          const rectW = pBR.px - pTL.px;
+          const rectH = pBR.py - pTL.py;
+
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.roundRect(pTL.px, pTL.py, rectW, rectH, 20 * dpr);
+          ctx.fill();
+
+          if (type === 1) {
+            ctx.strokeStyle = '#3b82f6';
+            ctx.lineWidth = 5 * dpr;
+            ctx.stroke();
+            ctx.fill();
+          }
+        });
+      }
+
+      drawGhostHouse() {
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+
+        const pTL = this.gridToPixel(-3, 2);
+        const pBR = this.gridToPixel(4, -2);
+        const w = pBR.px - pTL.px;
+        const h = pBR.py - pTL.py;
+
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = '#ec4899';
+        ctx.lineWidth = 2.5 * dpr;
+
+        ctx.beginPath();
+        ctx.rect(pTL.px, pTL.py, w, h);
+        ctx.fill();
+        ctx.stroke();
+
+        const pDoor1 = this.gridToPixel(0, 2);
+        const pDoor2 = this.gridToPixel(1, 2);
+        ctx.strokeStyle = '#090d16';
+        ctx.beginPath();
+        ctx.moveTo(pDoor1.px, pDoor1.py);
+        ctx.lineTo(pDoor2.px, pDoor2.py);
+        ctx.stroke();
+
+        const ghosts = (this.currentLevelId === 3 || this.currentLevelId === 4) 
+          ? this.activeGhosts.filter(g => !g.removed) 
+          : [
+              { name: 'Blinky', color: '#ef4444', x: -2, y: 1 },
+              { name: 'Pinky', color: '#f472b6', x: -1.5, y: -1 },
+              { name: 'Inky', color: '#06b6d4', x: 1.5, y: 1.25 },
+              { name: 'Clyde', color: '#f97316', x: 3, y: -1.25 }
+            ];
+
+        const isPurple = ((this.currentLevelId === 3 || this.currentLevelId === 4) && this.ghostsPurple);
+
+        ghosts.forEach(g => {
+          const pt = this.gridToPixel(g.x, g.y);
+          const size = 8 * dpr;
+
+          ctx.fillStyle = isPurple ? '#a855f7' : g.color;
+          ctx.beginPath();
+          ctx.arc(pt.px, pt.py - (2 * dpr), size, Math.PI, 0, false);
+          ctx.lineTo(pt.px + size, pt.py + size);
+          ctx.lineTo(pt.px - size, pt.py + size);
+          ctx.closePath();
+          ctx.fill();
+
+          if (isPurple) {
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(pt.px - (3 * dpr), pt.py - (2 * dpr), 2 * dpr, 0, Math.PI * 2);
+            ctx.arc(pt.px + (3 * dpr), pt.py - (2 * dpr), 2 * dpr, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(pt.px - (3 * dpr), pt.py - (2 * dpr), 2.5 * dpr, 0, Math.PI * 2);
+            ctx.arc(pt.px + (3 * dpr), pt.py - (2 * dpr), 2.5 * dpr, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      }
+
+      drawPellets() {
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+
+        this.pellets.forEach(p => {
+          if (p.eaten) return;
+
+          const pt = this.gridToPixel(p.x, p.y);
+
+          if (p.isPower) {
+            ctx.fillStyle = ((this.currentLevelId === 3 || this.currentLevelId === 4) && this.ghostsPurple) ? '#c084fc' : '#ffffff';
+            ctx.beginPath();
+            ctx.arc(pt.px, pt.py, 6.5 * dpr, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            ctx.fillStyle = '#cbd5e1';
+            ctx.beginPath();
+            ctx.arc(pt.px, pt.py, 2.2 * dpr, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      }
+
+      drawStrawberry(ctx, px, py, dpr) {
+        ctx.save();
+        ctx.translate(px, py);
+        const s = dpr;
+
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.moveTo(0, 7 * s);
+        ctx.bezierCurveTo(-7 * s, 2 * s, -7 * s, -5 * s, 0 * s, -4 * s);
+        ctx.bezierCurveTo(7 * s, -5 * s, 7 * s, 2 * s, 0, 7 * s);
+        ctx.fill();
+
+        ctx.fillStyle = '#22c55e';
+        ctx.beginPath();
+        ctx.moveTo(0, -4 * s);
+        ctx.lineTo(-4 * s, -7 * s);
+        ctx.lineTo(-1 * s, -5 * s);
+        ctx.lineTo(0, -8 * s);
+        ctx.lineTo(1 * s, -5 * s);
+        ctx.lineTo(4 * s, -7 * s);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#fef08a';
+        [[-2, -1], [2, -1], [0, 2], [-3, 2], [3, 2], [-1, 4], [1, 4]].forEach(([sx, sy]) => {
+          ctx.fillRect(sx * s, sy * s, 1 * s, 1.5 * s);
+        });
+        ctx.restore();
+      }
+
+      drawCherries(ctx, px, py, dpr) {
+        ctx.save();
+        ctx.translate(px, py);
+        const s = dpr;
+
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 1.5 * s;
+        ctx.beginPath();
+        ctx.moveTo(-4 * s, 2 * s);
+        ctx.quadraticCurveTo(-2 * s, -6 * s, 2 * s, -7 * s);
+        ctx.moveTo(4 * s, 3 * s);
+        ctx.quadraticCurveTo(1 * s, -4 * s, 2 * s, -7 * s);
+        ctx.stroke();
+
+        ctx.fillStyle = '#16a34a';
+        ctx.beginPath();
+        ctx.ellipse(3 * s, -7 * s, 3 * s, 1.5 * s, -Math.PI / 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#dc2626';
+        ctx.beginPath();
+        ctx.arc(-4 * s, 3 * s, 4 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#fca5a5';
+        ctx.beginPath();
+        ctx.arc(-5 * s, 1.5 * s, 1 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#dc2626';
+        ctx.beginPath();
+        ctx.arc(4 * s, 4 * s, 4 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#fca5a5';
+        ctx.beginPath();
+        ctx.arc(3 * s, 2.5 * s, 1 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      drawOrange(ctx, px, py, dpr) {
+        ctx.save();
+        ctx.translate(px, py);
+        const s = dpr;
+
+        ctx.fillStyle = '#f97316';
+        ctx.beginPath();
+        ctx.arc(0, 1 * s, 6.5 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#fdba74';
+        ctx.beginPath();
+        ctx.arc(-2 * s, -1 * s, 1.8 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = '#78350f';
+        ctx.lineWidth = 1.5 * s;
+        ctx.beginPath();
+        ctx.moveTo(0, -5.5 * s);
+        ctx.lineTo(0, -7.5 * s);
+        ctx.stroke();
+
+        ctx.fillStyle = '#16a34a';
+        ctx.beginPath();
+        ctx.ellipse(2 * s, -7 * s, 2.5 * s, 1.2 * s, Math.PI / 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      drawBanana(ctx, px, py, dpr) {
+        ctx.save();
+        ctx.translate(px, py);
+        const s = dpr;
+
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.arc(-2 * s, 0, 7 * s, 0.2, Math.PI * 0.95, false);
+        ctx.quadraticCurveTo(0, -3 * s, -2 * s, 0);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      drawPear(ctx, px, py, dpr) {
+        ctx.save();
+        ctx.translate(px, py);
+        const s = dpr;
+
+        ctx.fillStyle = '#84cc16';
+        ctx.beginPath();
+        ctx.arc(0, 2 * s, 6 * s, 0, Math.PI * 2);
+        ctx.arc(0, -2 * s, 4 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      drawApple(ctx, px, py, dpr) {
+        ctx.save();
+        ctx.translate(px, py);
+        const s = dpr;
+
+        ctx.fillStyle = '#ef4444';
+        ctx.beginPath();
+        ctx.arc(-2.5 * s, 0, 4.5 * s, 0, Math.PI * 2);
+        ctx.arc(2.5 * s, 0, 4.5 * s, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      drawPretzel(ctx, px, py, dpr) {
+        ctx.save();
+        ctx.translate(px, py);
+        const s = dpr;
+
+        ctx.strokeStyle = '#b45309';
+        ctx.lineWidth = 2.5 * s;
+        ctx.beginPath();
+        ctx.arc(-3 * s, 0, 3 * s, 0, Math.PI * 2);
+        ctx.arc(3 * s, 0, 3 * s, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      drawFruits() {
+        if (!this.fruits) return;
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+
+        this.fruits.forEach(f => {
+          if (f.eaten) return;
+          const pt = this.gridToPixel(f.x, f.y);
+
+          if (f.type === 'cherries') this.drawCherries(ctx, pt.px, pt.py, dpr);
+          else if (f.type === 'strawberry') this.drawStrawberry(ctx, pt.px, pt.py, dpr);
+          else if (f.type === 'orange') this.drawOrange(ctx, pt.px, pt.py, dpr);
+          else if (f.type === 'banana') this.drawBanana(ctx, pt.px, pt.py, dpr);
+          else if (f.type === 'pear') this.drawPear(ctx, pt.px, pt.py, dpr);
+          else if (f.type === 'apple') this.drawApple(ctx, pt.px, pt.py, dpr);
+          else if (f.type === 'pretzel') this.drawPretzel(ctx, pt.px, pt.py, dpr);
+        });
+      }
+
+      drawMsPacMan(opacity = 1.0) {
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+
+        let curX = this.x;
+        let curY = this.y;
+        let curM = this.matrix;
+        let curScale = this.scale;
+
+        if (this.animating) {
+          const t = this.animProgress;
+          curX = this.animStartPos.x + (this.animTargetPos.x - this.animStartPos.x) * t;
+          curY = this.animStartPos.y + (this.animTargetPos.y - this.animStartPos.y) * t;
+          curScale = (1 - t) * this.animStartPos.scale + t * this.animTargetPos.scale;
+
+          const m00 = (1 - t) * this.animStartPos.matrix[0][0] + t * this.animTargetPos.matrix[0][0];
+          const m01 = (1 - t) * this.animStartPos.matrix[0][1] + t * this.animTargetPos.matrix[0][1];
+          const m10 = (1 - t) * this.animStartPos.matrix[1][0] + t * this.animTargetPos.matrix[1][0];
+          const m11 = (1 - t) * this.animStartPos.matrix[1][1] + t * this.animTargetPos.matrix[1][1];
+          curM = [[m00, m01], [m10, m11]];
+        }
+
+        const pt = this.gridToPixel(curX, curY);
+        const S = pt.scale;
+
+        ctx.save();
+        ctx.globalAlpha = opacity;
+
+        const a = S * curM[0][0] * curScale;
+        const b = -S * curM[1][0] * curScale;
+        const c = S * curM[0][1] * curScale;
+        const d = -S * curM[1][1] * curScale;
+
+        ctx.transform(a, b, c, d, pt.px, pt.py);
+
+        const R = 0.6375;
+
+        ctx.shadowColor = '#eab308';
+        ctx.shadowBlur = 12 * dpr;
+
+        ctx.fillStyle = '#facc15';
+        ctx.strokeStyle = '#ca8a04';
+        ctx.lineWidth = 0.05 / curScale;
+
+        const mouthRad = this.mouthOpen;
+        const startAngle = Math.PI + mouthRad;
+        const endAngle = Math.PI - mouthRad;
+
+        ctx.beginPath();
+        ctx.arc(0, 0, R, startAngle, endAngle, false);
+        ctx.lineTo(0, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(-0.18, 0.26, 0.09, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ec4899';
+        ctx.beginPath();
+        ctx.ellipse(-0.22, 0.71, 0.16, 0.09, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.ellipse(0.22, 0.71, 0.16, 0.09, 0.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      drawPreImageGhost() {
+        if (this.history.length === 0) return;
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+
+        const pt = this.gridToPixel(this.preX, this.preY);
+        const S = pt.scale;
+
+        ctx.save();
+        ctx.globalAlpha = 0.25;
+
+        const a = S * this.preMatrix[0][0] * this.preScale;
+        const b = -S * this.preMatrix[1][0] * this.preScale;
+        const c = S * this.preMatrix[0][1] * this.preScale;
+        const d = -S * this.preMatrix[1][1] * this.preScale;
+
+        ctx.transform(a, b, c, d, pt.px, pt.py);
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(0, 0, 0.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+      }
+
+      drawTransformationTrajectory() {
+        if (!this.animating || !this.activeTransformation) return;
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+
+        const pStart = this.gridToPixel(this.animStartPos.x, this.animStartPos.y);
+        const pTarget = this.gridToPixel(this.animTargetPos.x, this.animTargetPos.y);
+
+        ctx.save();
+        ctx.strokeStyle = '#ec4899';
+        ctx.lineWidth = 2 * dpr;
+        ctx.setLineDash([4 * dpr, 4 * dpr]);
+
+        ctx.beginPath();
+        ctx.moveTo(pStart.px, pStart.py);
+        ctx.lineTo(pTarget.px, pTarget.py);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      renderHistory() {
+        const historyList = document.getElementById('history-list');
+        const stepCount = document.getElementById('step-count');
+        if (!historyList) return;
+
+        historyList.innerHTML = '';
+        if (stepCount) stepCount.innerText = `${this.history.length} step${this.history.length === 1 ? '' : 's'}`;
+
+        if (this.history.length === 0) {
+          historyList.innerHTML = `
+            <div class="text-center py-6 text-slate-500 text-xs italic font-sans-clean">
+              No transformation moves made yet.
+            </div>
+          `;
+          return;
+        }
+
+        const totalSteps = this.history.length;
+        this.history.forEach((step, idx) => {
+          const chronoIndex = totalSteps - idx;
+          const div = document.createElement('div');
+          div.setAttribute('data-step-index', chronoIndex);
+          div.className = "p-2.5 rounded-xl border border-slate-800 bg-slate-950/60 flex items-center justify-between gap-2 text-xs transition";
+
+          div.innerHTML = `
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-[10px] bg-slate-800 text-pink-400 px-1.5 py-0.5 rounded font-bold">
+                #${chronoIndex}
+              </span>
+              <div class="flex flex-col">
+                <span class="font-mono text-yellow-300 font-bold text-[11px]">${step.notation}</span>
+                <span class="text-[10px] text-slate-400 font-sans">
+                  (${step.fromX},${step.fromY}) ➔ (${step.toX},${step.toY})
+                </span>
+              </div>
+            </div>
+            <div class="flex items-center gap-1.5">
+              ${step.scoreGained > 0 ? `<span class="text-[10px] font-mono text-emerald-400 font-bold">+${step.scoreGained}pts</span>` : ''}
+              <span class="replay-indicator hidden text-[9px] font-arcade bg-cyan-950 text-cyan-300 border border-cyan-700/60 px-1.5 py-0.5 rounded">
+                ACTIVE
+              </span>
+            </div>
+          `;
+
+          historyList.appendChild(div);
+        });
+
+        this.updateHistoryHighlight();
+      }
+
+      updateHUD() {
+        const hudScore = document.getElementById('hud-score');
+        const hudPellets = document.getElementById('hud-pellets');
+        const hudPos = document.getElementById('hud-pos');
+
+        if (hudScore) {
+          hudScore.innerText = this.score.toString().padStart(4, '0');
+        }
+
+        if (hudPellets) {
+          const totalPellets = this.pellets.length;
+          const eatenPellets = this.pellets.filter(p => p.eaten).length;
+          hudPellets.innerText = `${eatenPellets} / ${totalPellets}`;
+        }
+
+        if (hudPos) {
+          const facingName = Matrix2x2.getFacingName(this.matrix);
+          hudPos.innerText = `(${this.x}, ${this.y}) ${facingName}`;
+        }
+
+        const startBtn = document.getElementById('btn-start-replay');
+        if (startBtn) {
+          startBtn.disabled = (this.history.length === 0 || this.isReplayActive);
+        }
+      }
+
+      showFeedback(text, type = "info") {
+        const box = document.getElementById('feedback-msg');
+        const txt = document.getElementById('feedback-text');
+        const icon = document.getElementById('feedback-icon');
+
+        if (!box || !txt || !icon) return;
+
+        box.classList.remove('hidden', 'bg-red-950/80', 'border-red-600/80', 'text-red-200', 'bg-emerald-950/80', 'border-emerald-600/80', 'text-emerald-200', 'bg-blue-950/80', 'border-blue-600/80', 'text-blue-200');
+
+        if (type === 'error') {
+          box.classList.add('bg-red-950/80', 'border', 'border-red-600/80', 'text-red-200');
+          icon.className = 'fa-solid fa-triangle-exclamation text-red-400 text-sm shrink-0';
+        } else if (type === 'success') {
+          box.classList.add('bg-emerald-950/80', 'border', 'border-emerald-600/80', 'text-emerald-200');
+          icon.className = 'fa-solid fa-circle-check text-emerald-400 text-sm shrink-0';
+        } else {
+          box.classList.add('bg-blue-950/80', 'border', 'border-blue-600/80', 'text-blue-200');
+          icon.className = 'fa-solid fa-circle-info text-blue-400 text-sm shrink-0';
+        }
+
+        txt.innerText = text;
+      }
+
+      initEventListeners() {
+        const form = document.getElementById('command-form');
+        const input = document.getElementById('command-input');
+
+        if (form) {
+          form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            if (input && input.value) {
+              this.executeCommand(input.value);
+              input.value = '';
+            }
+          });
+        }
+
+        const presetChips = document.querySelectorAll('.preset-chip');
+        presetChips.forEach(chip => {
+          chip.addEventListener('click', () => {
+            const cmd = chip.getAttribute('data-cmd');
+            if (cmd) this.executeCommand(cmd);
+          });
+        });
+
+        const levelSelect = document.getElementById('level-select');
+        if (levelSelect) {
+          levelSelect.addEventListener('change', (e) => {
+            const lvl = parseInt(e.target.value, 10);
+            this.loadLevel(lvl);
+          });
+        }
+
+        const btnReset = document.getElementById('btn-reset-level');
+        if (btnReset) {
+          btnReset.addEventListener('click', () => {
+            const resetModal = document.getElementById('reset-confirm-modal');
+            if (resetModal) resetModal.classList.remove('hidden');
+          });
+        }
+
+        const btnConfirmReset = document.getElementById('btn-confirm-reset');
+        if (btnConfirmReset) {
+          btnConfirmReset.addEventListener('click', () => {
+            this.resetCurrentLevel();
+          });
+        }
+
+        const btnCancelReset = document.getElementById('btn-cancel-reset');
+        if (btnCancelReset) {
+          btnCancelReset.addEventListener('click', () => {
+            const resetModal = document.getElementById('reset-confirm-modal');
+            if (resetModal) resetModal.classList.add('hidden');
+          });
+        }
+
+        const btnUndo = document.getElementById('btn-undo');
+        if (btnUndo) {
+          btnUndo.addEventListener('click', () => this.undoStep());
+        }
+
+        const btnConfirmGameOver = document.getElementById('btn-confirm-game-over');
+        if (btnConfirmGameOver) {
+          btnConfirmGameOver.addEventListener('click', () => {
+            this.resetCurrentLevel();
+          });
+        }
+
+        // Replay Controls
+        const btnStartReplay = document.getElementById('btn-start-replay');
+        if (btnStartReplay) btnStartReplay.addEventListener('click', () => this.startReplay());
+
+        const btnExitReplay = document.getElementById('btn-exit-replay');
+        if (btnExitReplay) btnExitReplay.addEventListener('click', () => this.exitReplay());
+
+        const btnReplayPlay = document.getElementById('btn-replay-play');
+        if (btnReplayPlay) btnReplayPlay.addEventListener('click', () => this.toggleReplayPlay());
+
+        const btnReplayNext = document.getElementById('btn-replay-next');
+        if (btnReplayNext) btnReplayNext.addEventListener('click', () => this.goToReplayStep(this.replayStep + 1));
+
+        const btnReplayPrev = document.getElementById('btn-replay-prev');
+        if (btnReplayPrev) btnReplayPrev.addEventListener('click', () => this.goToReplayStep(this.replayStep - 1));
+
+        // Modal Controls
+        const modal = document.getElementById('cheat-sheet-modal');
+        const btnOpenCheat = document.getElementById('btn-cheat-sheet');
+        const btnClose1 = document.getElementById('btn-close-modal');
+        const btnClose2 = document.getElementById('btn-close-modal-2');
+
+        if (btnOpenCheat) btnOpenCheat.addEventListener('click', () => modal?.classList.remove('hidden'));
+        if (btnClose1) btnClose1.addEventListener('click', () => modal?.classList.add('hidden'));
+        if (btnClose2) btnClose2.addEventListener('click', () => modal?.classList.add('hidden'));
+
+        // CRT Toggle Button
+        const btnCrt = document.getElementById('btn-crt');
+        const container = document.getElementById('canvas-container');
+        if (btnCrt && container) {
+          btnCrt.addEventListener('click', () => {
+            container.classList.toggle('crt-overlay');
+          });
+        }
+      }
+    }
+
+    // Launch Engine
+    window.addEventListener('DOMContentLoaded', () => {
+      window.gameEngine = new GameEngine();
+    });
+  </script>
+</body>
+</html>
