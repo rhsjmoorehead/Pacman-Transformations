@@ -102,6 +102,10 @@
           <i class="fa-solid fa-floppy-disk text-xs"></i>
           <span class="hidden md:inline">Auto-Saved</span>
         </button>
+        <button id="btn-toggle-video" title="Toggle Video Player Window" class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs border border-cyan-400 shadow flex items-center gap-1.5 transition">
+          <i class="fa-solid fa-circle-play"></i>
+          <span class="hidden sm:inline">Watch Video</span>
+        </button>
         <button id="btn-crt" title="Toggle CRT Screen Glow" class="p-2 w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
           <i class="fa-solid fa-tv text-sm"></i>
         </button>
@@ -331,6 +335,35 @@
     </section>
 
   </main>
+
+  <!-- Video Player Floating Window / Modal -->
+  <div id="video-modal" class="fixed bottom-4 right-4 z-50 w-full max-w-md bg-slate-900 border-2 border-cyan-500/80 rounded-2xl shadow-2xl glow-cyan flex flex-col overflow-hidden transition-all duration-300">
+    <!-- Video Window Header -->
+    <div class="bg-slate-950 border-b border-cyan-800/60 p-2.5 px-3.5 flex items-center justify-between select-none">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-circle-play text-cyan-400 text-sm animate-pulse"></i>
+        <h3 class="font-arcade text-[11px] text-cyan-300 text-glow-cyan">PAC-MAN LESSON VIDEO</h3>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btn-close-video" class="text-slate-400 hover:text-white p-1 rounded transition text-xs cursor-pointer" title="Close Video Window">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+    </div>
+    <!-- Video Player Container -->
+    <div class="p-3 bg-slate-950/90 flex flex-col gap-2">
+      <div class="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-900 border border-slate-800 shadow-inner flex items-center justify-center">
+        <video id="video-player" controls playsinline class="w-full h-full object-contain rounded-xl">
+          <source src="Ms Pac-Man Project Video.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+      <p class="text-[11px] text-slate-400 px-1 font-sans-clean flex items-center gap-1.5">
+        <i class="fa-solid fa-circle-info text-cyan-400"></i>
+        <span>Watch the video to solve Level 1 transformation steps!</span>
+      </p>
+    </div>
+  </div>
 
   <!-- Syntax Reference Modal -->
   <div id="cheat-sheet-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity">
@@ -1040,7 +1073,7 @@
 
           this.levelStates = data.levelStates;
           this.loadLevel(data.currentLevelId, false);
-          this.showFeedback(`Restored saved progress for Level ${this.currentLevelId}!`, "success");
+          this.showFeedback(`Restored saved progress for Level ${this.currentLevelId}!`, "info");
           return true;
         } catch (e) {
           console.warn("Error loading state from localStorage:", e);
@@ -2134,41 +2167,55 @@
 
         const ghosts = (this.currentLevelId === 3 || this.currentLevelId === 4) 
           ? this.activeGhosts.filter(g => !g.removed) 
-          : [
-              { name: 'Blinky', color: '#ef4444', x: -2, y: 1 },
-              { name: 'Pinky', color: '#f472b6', x: -1.5, y: -1 },
-              { name: 'Inky', color: '#06b6d4', x: 1.5, y: 1.25 },
-              { name: 'Clyde', color: '#f97316', x: 3, y: -1.25 }
-            ];
-
-        const isPurple = ((this.currentLevelId === 3 || this.currentLevelId === 4) && this.ghostsPurple);
+          : [];
 
         ghosts.forEach(g => {
-          const pt = this.gridToPixel(g.x, g.y);
-          const size = 8 * dpr;
-
-          ctx.fillStyle = isPurple ? '#a855f7' : g.color;
-          ctx.beginPath();
-          ctx.arc(pt.px, pt.py - (2 * dpr), size, Math.PI, 0, false);
-          ctx.lineTo(pt.px + size, pt.py + size);
-          ctx.lineTo(pt.px - size, pt.py + size);
-          ctx.closePath();
-          ctx.fill();
-
-          if (isPurple) {
-            ctx.fillStyle = '#fef08a';
-            ctx.beginPath();
-            ctx.arc(pt.px - (3 * dpr), pt.py - (2 * dpr), 2 * dpr, 0, Math.PI * 2);
-            ctx.arc(pt.px + (3 * dpr), pt.py - (2 * dpr), 2 * dpr, 0, Math.PI * 2);
-            ctx.fill();
-          } else {
-            ctx.fillStyle = '#ffffff';
-            ctx.beginPath();
-            ctx.arc(pt.px - (3 * dpr), pt.py - (2 * dpr), 2.5 * dpr, 0, Math.PI * 2);
-            ctx.arc(pt.px + (3 * dpr), pt.py - (2 * dpr), 2.5 * dpr, 0, Math.PI * 2);
-            ctx.fill();
-          }
+          this.drawSingleGhost(g.x, g.y, g.color, g.name);
         });
+      }
+
+      drawSingleGhost(gx, gy, color, name) {
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+        const pt = this.gridToPixel(gx, gy);
+        const S = pt.scale;
+
+        ctx.save();
+        ctx.translate(pt.px, pt.py);
+
+        const r = S * 0.45;
+        const ghostColor = this.ghostsPurple ? '#8b5cf6' : color;
+
+        ctx.fillStyle = ghostColor;
+        ctx.shadowColor = ghostColor;
+        ctx.shadowBlur = 8 * dpr;
+
+        ctx.beginPath();
+        ctx.arc(0, -r * 0.2, r, Math.PI, 0, false);
+        ctx.lineTo(r, r * 0.8);
+        
+        const waveW = (2 * r) / 3;
+        ctx.lineTo(r - waveW * 0.5, r * 0.5);
+        ctx.lineTo(r - waveW, r * 0.8);
+        ctx.lineTo(r - waveW * 1.5, r * 0.5);
+        ctx.lineTo(r - waveW * 2, r * 0.8);
+        ctx.lineTo(-r, r * 0.8);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-r * 0.35, -r * 0.2, r * 0.3, 0, Math.PI * 2);
+        ctx.arc(r * 0.35, -r * 0.2, r * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = this.ghostsPurple ? '#f472b6' : '#1e3a8a';
+        ctx.beginPath();
+        ctx.arc(-r * 0.35, -r * 0.2, r * 0.15, 0, Math.PI * 2);
+        ctx.arc(r * 0.35, -r * 0.2, r * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
       }
 
       drawPellets() {
@@ -2177,197 +2224,51 @@
 
         this.pellets.forEach(p => {
           if (p.eaten) return;
-
           const pt = this.gridToPixel(p.x, p.y);
 
+          ctx.save();
           if (p.isPower) {
-            ctx.fillStyle = ((this.currentLevelId === 3 || this.currentLevelId === 4) && this.ghostsPurple) ? '#c084fc' : '#ffffff';
+            ctx.fillStyle = '#facc15';
+            ctx.shadowColor = '#facc15';
+            ctx.shadowBlur = 10 * dpr;
             ctx.beginPath();
-            ctx.arc(pt.px, pt.py, 6.5 * dpr, 0, Math.PI * 2);
+            ctx.arc(pt.px, pt.py, 5.5 * dpr, 0, Math.PI * 2);
             ctx.fill();
           } else {
-            ctx.fillStyle = '#cbd5e1';
+            ctx.fillStyle = '#f472b6';
             ctx.beginPath();
-            ctx.arc(pt.px, pt.py, 2.2 * dpr, 0, Math.PI * 2);
+            ctx.arc(pt.px, pt.py, 2.5 * dpr, 0, Math.PI * 2);
             ctx.fill();
           }
+          ctx.restore();
         });
-      }
-
-      drawStrawberry(ctx, px, py, dpr) {
-        ctx.save();
-        ctx.translate(px, py);
-        const s = dpr;
-
-        ctx.fillStyle = '#ef4444';
-        ctx.beginPath();
-        ctx.moveTo(0, 7 * s);
-        ctx.bezierCurveTo(-7 * s, 2 * s, -7 * s, -5 * s, 0 * s, -4 * s);
-        ctx.bezierCurveTo(7 * s, -5 * s, 7 * s, 2 * s, 0, 7 * s);
-        ctx.fill();
-
-        ctx.fillStyle = '#22c55e';
-        ctx.beginPath();
-        ctx.moveTo(0, -4 * s);
-        ctx.lineTo(-4 * s, -7 * s);
-        ctx.lineTo(-1 * s, -5 * s);
-        ctx.lineTo(0, -8 * s);
-        ctx.lineTo(1 * s, -5 * s);
-        ctx.lineTo(4 * s, -7 * s);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = '#fef08a';
-        [[-2, -1], [2, -1], [0, 2], [-3, 2], [3, 2], [-1, 4], [1, 4]].forEach(([sx, sy]) => {
-          ctx.fillRect(sx * s, sy * s, 1 * s, 1.5 * s);
-        });
-        ctx.restore();
-      }
-
-      drawCherries(ctx, px, py, dpr) {
-        ctx.save();
-        ctx.translate(px, py);
-        const s = dpr;
-
-        ctx.strokeStyle = '#22c55e';
-        ctx.lineWidth = 1.5 * s;
-        ctx.beginPath();
-        ctx.moveTo(-4 * s, 2 * s);
-        ctx.quadraticCurveTo(-2 * s, -6 * s, 2 * s, -7 * s);
-        ctx.moveTo(4 * s, 3 * s);
-        ctx.quadraticCurveTo(1 * s, -4 * s, 2 * s, -7 * s);
-        ctx.stroke();
-
-        ctx.fillStyle = '#16a34a';
-        ctx.beginPath();
-        ctx.ellipse(3 * s, -7 * s, 3 * s, 1.5 * s, -Math.PI / 4, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#dc2626';
-        ctx.beginPath();
-        ctx.arc(-4 * s, 3 * s, 4 * s, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#fca5a5';
-        ctx.beginPath();
-        ctx.arc(-5 * s, 1.5 * s, 1 * s, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#dc2626';
-        ctx.beginPath();
-        ctx.arc(4 * s, 4 * s, 4 * s, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#fca5a5';
-        ctx.beginPath();
-        ctx.arc(3 * s, 2.5 * s, 1 * s, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.restore();
-      }
-
-      drawOrange(ctx, px, py, dpr) {
-        ctx.save();
-        ctx.translate(px, py);
-        const s = dpr;
-
-        ctx.fillStyle = '#f97316';
-        ctx.beginPath();
-        ctx.arc(0, 1 * s, 6.5 * s, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#fdba74';
-        ctx.beginPath();
-        ctx.arc(-2 * s, -1 * s, 1.8 * s, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.strokeStyle = '#78350f';
-        ctx.lineWidth = 1.5 * s;
-        ctx.beginPath();
-        ctx.moveTo(0, -5.5 * s);
-        ctx.lineTo(0, -7.5 * s);
-        ctx.stroke();
-
-        ctx.fillStyle = '#16a34a';
-        ctx.beginPath();
-        ctx.ellipse(2 * s, -7 * s, 2.5 * s, 1.2 * s, Math.PI / 6, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      drawBanana(ctx, px, py, dpr) {
-        ctx.save();
-        ctx.translate(px, py);
-        const s = dpr;
-
-        ctx.fillStyle = '#facc15';
-        ctx.beginPath();
-        ctx.arc(-2 * s, 0, 7 * s, 0.2, Math.PI * 0.95, false);
-        ctx.quadraticCurveTo(0, -3 * s, -2 * s, 0);
-        ctx.fill();
-
-        ctx.restore();
-      }
-
-      drawPear(ctx, px, py, dpr) {
-        ctx.save();
-        ctx.translate(px, py);
-        const s = dpr;
-
-        ctx.fillStyle = '#84cc16';
-        ctx.beginPath();
-        ctx.arc(0, 2 * s, 6 * s, 0, Math.PI * 2);
-        ctx.arc(0, -2 * s, 4 * s, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.restore();
-      }
-
-      drawApple(ctx, px, py, dpr) {
-        ctx.save();
-        ctx.translate(px, py);
-        const s = dpr;
-
-        ctx.fillStyle = '#ef4444';
-        ctx.beginPath();
-        ctx.arc(-2.5 * s, 0, 4.5 * s, 0, Math.PI * 2);
-        ctx.arc(2.5 * s, 0, 4.5 * s, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.restore();
-      }
-
-      drawPretzel(ctx, px, py, dpr) {
-        ctx.save();
-        ctx.translate(px, py);
-        const s = dpr;
-
-        ctx.strokeStyle = '#b45309';
-        ctx.lineWidth = 2.5 * s;
-        ctx.beginPath();
-        ctx.arc(-3 * s, 0, 3 * s, 0, Math.PI * 2);
-        ctx.arc(3 * s, 0, 3 * s, 0, Math.PI * 2);
-        ctx.stroke();
-
-        ctx.restore();
       }
 
       drawFruits() {
-        if (!this.fruits) return;
         const ctx = this.ctx;
         const dpr = window.devicePixelRatio || 1;
+        if (!this.fruits) return;
+
+        const fruitIcons = {
+          banana: '🍌',
+          pear: '🍐',
+          apple: '🍎',
+          pretzel: '🥨',
+          orange: '🍊',
+          strawberry: '🍓',
+          cherries: '🍒'
+        };
 
         this.fruits.forEach(f => {
           if (f.eaten) return;
           const pt = this.gridToPixel(f.x, f.y);
 
-          if (f.type === 'cherries') this.drawCherries(ctx, pt.px, pt.py, dpr);
-          else if (f.type === 'strawberry') this.drawStrawberry(ctx, pt.px, pt.py, dpr);
-          else if (f.type === 'orange') this.drawOrange(ctx, pt.px, pt.py, dpr);
-          else if (f.type === 'banana') this.drawBanana(ctx, pt.px, pt.py, dpr);
-          else if (f.type === 'pear') this.drawPear(ctx, pt.px, pt.py, dpr);
-          else if (f.type === 'apple') this.drawApple(ctx, pt.px, pt.py, dpr);
-          else if (f.type === 'pretzel') this.drawPretzel(ctx, pt.px, pt.py, dpr);
+          ctx.save();
+          ctx.font = `${14 * dpr}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(fruitIcons[f.type] || '🍒', pt.px, pt.py);
+          ctx.restore();
         });
       }
 
@@ -2378,13 +2279,13 @@
         let curX = this.x;
         let curY = this.y;
         let curM = this.matrix;
-        let curScale = this.scale;
+        let curS = this.scale;
 
         if (this.animating) {
           const t = this.animProgress;
           curX = this.animStartPos.x + (this.animTargetPos.x - this.animStartPos.x) * t;
           curY = this.animStartPos.y + (this.animTargetPos.y - this.animStartPos.y) * t;
-          curScale = (1 - t) * this.animStartPos.scale + t * this.animTargetPos.scale;
+          curS = (1 - t) * this.animStartPos.scale + t * this.animTargetPos.scale;
 
           const m00 = (1 - t) * this.animStartPos.matrix[0][0] + t * this.animTargetPos.matrix[0][0];
           const m01 = (1 - t) * this.animStartPos.matrix[0][1] + t * this.animTargetPos.matrix[0][1];
@@ -2399,10 +2300,10 @@
         ctx.save();
         ctx.globalAlpha = opacity;
 
-        const a = S * curM[0][0] * curScale;
-        const b = -S * curM[1][0] * curScale;
-        const c = S * curM[0][1] * curScale;
-        const d = -S * curM[1][1] * curScale;
+        const a = S * curM[0][0] * curS;
+        const b = -S * curM[1][0] * curS;
+        const c = S * curM[0][1] * curS;
+        const d = -S * curM[1][1] * curS;
 
         ctx.transform(a, b, c, d, pt.px, pt.py);
 
@@ -2412,8 +2313,8 @@
         ctx.shadowBlur = 12 * dpr;
 
         ctx.fillStyle = '#facc15';
-        ctx.strokeStyle = '#ca8a04';
-        ctx.lineWidth = 0.05 / curScale;
+        ctx.strokeStyle = '#eab308';
+        ctx.lineWidth = 0.08 / curS;
 
         const mouthRad = this.mouthOpen;
         const startAngle = Math.PI + mouthRad;
@@ -2439,19 +2340,24 @@
         ctx.ellipse(0.22, 0.71, 0.16, 0.09, 0.2, 0, Math.PI * 2);
         ctx.fill();
 
+        ctx.fillStyle = '#f43f5e';
+        ctx.beginPath();
+        ctx.arc(0, 0.71, 0.07, 0, Math.PI * 2);
+        ctx.fill();
+
         ctx.restore();
       }
 
       drawPreImageGhost() {
-        if (this.history.length === 0) return;
+        if (!this.animating && (this.preX === this.x && this.preY === this.y)) return;
+
         const ctx = this.ctx;
         const dpr = window.devicePixelRatio || 1;
-
         const pt = this.gridToPixel(this.preX, this.preY);
         const S = pt.scale;
 
         ctx.save();
-        ctx.globalAlpha = 0.25;
+        ctx.globalAlpha = 0.35;
 
         const a = S * this.preMatrix[0][0] * this.preScale;
         const b = -S * this.preMatrix[1][0] * this.preScale;
@@ -2460,132 +2366,166 @@
 
         ctx.transform(a, b, c, d, pt.px, pt.py);
 
+        const R = 0.6375;
         ctx.fillStyle = '#38bdf8';
+        ctx.strokeStyle = '#0284c7';
+        ctx.lineWidth = 0.08 / this.preScale;
+
         ctx.beginPath();
-        ctx.arc(0, 0, 0.6, 0, Math.PI * 2);
+        ctx.arc(0, 0, R, 0, Math.PI * 2);
         ctx.fill();
+        ctx.stroke();
 
         ctx.restore();
       }
 
       drawTransformationTrajectory() {
-        if (!this.animating || !this.activeTransformation) return;
+        if (!this.activeTransformation || !this.animating) return;
+
         const ctx = this.ctx;
         const dpr = window.devicePixelRatio || 1;
-
-        const pStart = this.gridToPixel(this.animStartPos.x, this.animStartPos.y);
-        const pTarget = this.gridToPixel(this.animTargetPos.x, this.animTargetPos.y);
+        const tr = this.activeTransformation;
 
         ctx.save();
         ctx.strokeStyle = '#ec4899';
         ctx.lineWidth = 2 * dpr;
         ctx.setLineDash([4 * dpr, 4 * dpr]);
 
-        ctx.beginPath();
-        ctx.moveTo(pStart.px, pStart.py);
-        ctx.lineTo(pTarget.px, pTarget.py);
-        ctx.stroke();
+        if (tr.type === 'reflection') {
+          if (tr.lineType === 'x=k') {
+            const p1 = this.gridToPixel(tr.lineVal, -16);
+            const p2 = this.gridToPixel(tr.lineVal, 14);
+            ctx.beginPath();
+            ctx.moveTo(p1.px, p1.py);
+            ctx.lineTo(p2.px, p2.py);
+            ctx.stroke();
+          } else if (tr.lineType === 'y=k') {
+            const p1 = this.gridToPixel(-15, tr.lineVal);
+            const p2 = this.gridToPixel(16, tr.lineVal);
+            ctx.beginPath();
+            ctx.moveTo(p1.px, p1.py);
+            ctx.lineTo(p2.px, p2.py);
+            ctx.stroke();
+          } else if (tr.lineType === 'y=x') {
+            const p1 = this.gridToPixel(-13, -13);
+            const p2 = this.gridToPixel(13, 13);
+            ctx.beginPath();
+            ctx.moveTo(p1.px, p1.py);
+            ctx.lineTo(p2.px, p2.py);
+            ctx.stroke();
+          } else if (tr.lineType === 'y=-x') {
+            const p1 = this.gridToPixel(-13, 13);
+            const p2 = this.gridToPixel(13, -13);
+            ctx.beginPath();
+            ctx.moveTo(p1.px, p1.py);
+            ctx.lineTo(p2.px, p2.py);
+            ctx.stroke();
+          }
+        } else if (tr.type === 'translation') {
+          const pStart = this.gridToPixel(this.animStartPos.x, this.animStartPos.y);
+          const pEnd = this.gridToPixel(this.animTargetPos.x, this.animTargetPos.y);
+          ctx.beginPath();
+          ctx.moveTo(pStart.px, pStart.py);
+          ctx.lineTo(pEnd.px, pEnd.py);
+          ctx.stroke();
+        } else if (tr.type === 'rotation') {
+          const centerPt = this.gridToPixel(tr.aboutX, tr.aboutY);
+          ctx.fillStyle = '#facc15';
+          ctx.beginPath();
+          ctx.arc(centerPt.px, centerPt.py, 5 * dpr, 0, Math.PI * 2);
+          ctx.fill();
+        }
 
         ctx.restore();
+      }
+
+      showFeedback(msg, type = "info") {
+        const box = document.getElementById('feedback-msg');
+        const icon = document.getElementById('feedback-icon');
+        const text = document.getElementById('feedback-text');
+
+        if (!box || !icon || !text) return;
+
+        box.classList.remove('hidden', 'bg-emerald-950/80', 'text-emerald-300', 'border-emerald-700/60',
+          'bg-rose-950/80', 'text-rose-300', 'border-rose-700/60',
+          'bg-slate-950', 'text-cyan-300', 'border-cyan-700/60');
+
+        box.classList.add('border');
+
+        if (type === 'success') {
+          box.classList.add('bg-emerald-950/80', 'text-emerald-300', 'border-emerald-700/60');
+          icon.className = 'fa-solid fa-circle-check text-emerald-400 text-sm shrink-0';
+        } else if (type === 'error') {
+          box.classList.add('bg-rose-950/80', 'text-rose-300', 'border-rose-700/60');
+          icon.className = 'fa-solid fa-triangle-exclamation text-rose-400 text-sm shrink-0';
+        } else {
+          box.classList.add('bg-slate-950', 'text-cyan-300', 'border-cyan-700/60');
+          icon.className = 'fa-solid fa-circle-info text-cyan-400 text-sm shrink-0';
+        }
+
+        text.innerText = msg;
+      }
+
+      updateHUD() {
+        const scoreEl = document.getElementById('hud-score');
+        const pelletsEl = document.getElementById('hud-pellets');
+        const posEl = document.getElementById('hud-pos');
+
+        if (scoreEl) scoreEl.innerText = this.score.toString().padStart(4, '0');
+
+        if (pelletsEl) {
+          const totalDots = this.pellets.length;
+          const eatenDots = this.pellets.filter(p => p.eaten).length;
+          pelletsEl.innerText = `${eatenDots} / ${totalDots}`;
+        }
+
+        if (posEl) {
+          posEl.innerText = `(${this.x}, ${this.y})`;
+        }
       }
 
       renderHistory() {
         const historyList = document.getElementById('history-list');
         const stepCount = document.getElementById('step-count');
-        if (!historyList) return;
 
-        historyList.innerHTML = '';
-        if (stepCount) stepCount.innerText = `${this.history.length} step${this.history.length === 1 ? '' : 's'}`;
+        if (stepCount) {
+          stepCount.innerText = `${this.history.length} step${this.history.length === 1 ? '' : 's'}`;
+        }
+
+        if (!historyList) return;
 
         if (this.history.length === 0) {
           historyList.innerHTML = `
-            <div class="text-center py-6 text-slate-500 text-xs italic font-sans-clean">
-              No transformation moves made yet.
+            <div class="text-center py-6 text-slate-500 text-xs">
+              <i class="fa-solid fa-hourglass-start text-lg mb-1 block opacity-40"></i>
+              No steps performed yet. Enter a transformation command above!
             </div>
           `;
           return;
         }
 
-        const totalSteps = this.history.length;
+        let html = '';
         this.history.forEach((step, idx) => {
-          const chronoIndex = totalSteps - idx;
-          const div = document.createElement('div');
-          div.setAttribute('data-step-index', chronoIndex);
-          div.className = "p-2.5 rounded-xl border border-slate-800 bg-slate-950/60 flex items-center justify-between gap-2 text-xs transition";
-
-          div.innerHTML = `
-            <div class="flex items-center gap-2">
-              <span class="font-mono text-[10px] bg-slate-800 text-pink-400 px-1.5 py-0.5 rounded font-bold">
-                #${chronoIndex}
-              </span>
-              <div class="flex flex-col">
-                <span class="font-mono text-yellow-300 font-bold text-[11px]">${step.notation}</span>
-                <span class="text-[10px] text-slate-400 font-sans">
-                  (${step.fromX},${step.fromY}) ➔ (${step.toX},${step.toY})
-                </span>
+          const chronoIndex = this.history.length - 1 - idx;
+          html += `
+            <div data-step-index="${chronoIndex}" class="p-2.5 rounded-xl border border-slate-800 bg-slate-950/60 text-xs flex items-center justify-between transition gap-2">
+              <div class="flex items-center gap-2">
+                <span class="font-arcade text-[10px] text-pink-400 bg-pink-950/60 px-1.5 py-0.5 rounded border border-pink-800/50">#${this.history.length - idx}</span>
+                <div>
+                  <div class="font-mono text-yellow-300 font-semibold">${step.notation}</div>
+                  <div class="text-[10px] text-slate-400">
+                    (${step.fromX}, ${step.fromY}) ➔ (${step.toX}, ${step.toY})
+                    ${step.scoreGained > 0 ? `<span class="text-emerald-400 font-semibold ml-1">+${step.scoreGained} pts</span>` : ''}
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="flex items-center gap-1.5">
-              ${step.scoreGained > 0 ? `<span class="text-[10px] font-mono text-emerald-400 font-bold">+${step.scoreGained}pts</span>` : ''}
-              <span class="replay-indicator hidden text-[9px] font-arcade bg-cyan-950 text-cyan-300 border border-cyan-700/60 px-1.5 py-0.5 rounded">
-                ACTIVE
-              </span>
+              <span class="replay-indicator hidden text-[9px] font-arcade text-cyan-300 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-700 animate-pulse">REPLAY</span>
             </div>
           `;
-
-          historyList.appendChild(div);
         });
 
+        historyList.innerHTML = html;
         this.updateHistoryHighlight();
-      }
-
-      updateHUD() {
-        const hudScore = document.getElementById('hud-score');
-        const hudPellets = document.getElementById('hud-pellets');
-        const hudPos = document.getElementById('hud-pos');
-
-        if (hudScore) {
-          hudScore.innerText = this.score.toString().padStart(4, '0');
-        }
-
-        if (hudPellets) {
-          const totalPellets = this.pellets.length;
-          const eatenPellets = this.pellets.filter(p => p.eaten).length;
-          hudPellets.innerText = `${eatenPellets} / ${totalPellets}`;
-        }
-
-        if (hudPos) {
-          const facingName = Matrix2x2.getFacingName(this.matrix);
-          hudPos.innerText = `(${this.x}, ${this.y}) ${facingName}`;
-        }
-
-        const startBtn = document.getElementById('btn-start-replay');
-        if (startBtn) {
-          startBtn.disabled = (this.history.length === 0 || this.isReplayActive);
-        }
-      }
-
-      showFeedback(text, type = "info") {
-        const box = document.getElementById('feedback-msg');
-        const txt = document.getElementById('feedback-text');
-        const icon = document.getElementById('feedback-icon');
-
-        if (!box || !txt || !icon) return;
-
-        box.classList.remove('hidden', 'bg-red-950/80', 'border-red-600/80', 'text-red-200', 'bg-emerald-950/80', 'border-emerald-600/80', 'text-emerald-200', 'bg-blue-950/80', 'border-blue-600/80', 'text-blue-200');
-
-        if (type === 'error') {
-          box.classList.add('bg-red-950/80', 'border', 'border-red-600/80', 'text-red-200');
-          icon.className = 'fa-solid fa-triangle-exclamation text-red-400 text-sm shrink-0';
-        } else if (type === 'success') {
-          box.classList.add('bg-emerald-950/80', 'border', 'border-emerald-600/80', 'text-emerald-200');
-          icon.className = 'fa-solid fa-circle-check text-emerald-400 text-sm shrink-0';
-        } else {
-          box.classList.add('bg-blue-950/80', 'border', 'border-blue-600/80', 'text-blue-200');
-          icon.className = 'fa-solid fa-circle-info text-blue-400 text-sm shrink-0';
-        }
-
-        txt.innerText = text;
       }
 
       initEventListeners() {
@@ -2595,17 +2535,17 @@
         if (form) {
           form.addEventListener('submit', (e) => {
             e.preventDefault();
-            if (input && input.value) {
-              this.executeCommand(input.value);
+            const cmd = input.value;
+            if (cmd) {
+              this.executeCommand(cmd);
               input.value = '';
             }
           });
         }
 
-        const presetChips = document.querySelectorAll('.preset-chip');
-        presetChips.forEach(chip => {
-          chip.addEventListener('click', () => {
-            const cmd = chip.getAttribute('data-cmd');
+        document.querySelectorAll('.preset-chip').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const cmd = btn.getAttribute('data-cmd');
             if (cmd) this.executeCommand(cmd);
           });
         });
@@ -2613,8 +2553,13 @@
         const levelSelect = document.getElementById('level-select');
         if (levelSelect) {
           levelSelect.addEventListener('change', (e) => {
-            const lvl = parseInt(e.target.value, 10);
-            this.loadLevel(lvl);
+            const newLevel = parseInt(e.target.value, 10);
+            this.loadLevel(newLevel);
+            
+            const videoModal = document.getElementById('video-modal');
+            if (newLevel === 1 && videoModal) {
+              videoModal.classList.remove('hidden');
+            }
           });
         }
 
@@ -2630,6 +2575,8 @@
         if (btnConfirmReset) {
           btnConfirmReset.addEventListener('click', () => {
             this.resetCurrentLevel();
+            const resetModal = document.getElementById('reset-confirm-modal');
+            if (resetModal) resetModal.classList.add('hidden');
           });
         }
 
@@ -2641,11 +2588,6 @@
           });
         }
 
-        const btnUndo = document.getElementById('btn-undo');
-        if (btnUndo) {
-          btnUndo.addEventListener('click', () => this.undoStep());
-        }
-
         const btnConfirmGameOver = document.getElementById('btn-confirm-game-over');
         if (btnConfirmGameOver) {
           btnConfirmGameOver.addEventListener('click', () => {
@@ -2653,33 +2595,13 @@
           });
         }
 
-        // Replay Controls
-        const btnStartReplay = document.getElementById('btn-start-replay');
-        if (btnStartReplay) btnStartReplay.addEventListener('click', () => this.startReplay());
+        const btnUndo = document.getElementById('btn-undo');
+        if (btnUndo) {
+          btnUndo.addEventListener('click', () => {
+            this.undoStep();
+          });
+        }
 
-        const btnExitReplay = document.getElementById('btn-exit-replay');
-        if (btnExitReplay) btnExitReplay.addEventListener('click', () => this.exitReplay());
-
-        const btnReplayPlay = document.getElementById('btn-replay-play');
-        if (btnReplayPlay) btnReplayPlay.addEventListener('click', () => this.toggleReplayPlay());
-
-        const btnReplayNext = document.getElementById('btn-replay-next');
-        if (btnReplayNext) btnReplayNext.addEventListener('click', () => this.goToReplayStep(this.replayStep + 1));
-
-        const btnReplayPrev = document.getElementById('btn-replay-prev');
-        if (btnReplayPrev) btnReplayPrev.addEventListener('click', () => this.goToReplayStep(this.replayStep - 1));
-
-        // Modal Controls
-        const modal = document.getElementById('cheat-sheet-modal');
-        const btnOpenCheat = document.getElementById('btn-cheat-sheet');
-        const btnClose1 = document.getElementById('btn-close-modal');
-        const btnClose2 = document.getElementById('btn-close-modal-2');
-
-        if (btnOpenCheat) btnOpenCheat.addEventListener('click', () => modal?.classList.remove('hidden'));
-        if (btnClose1) btnClose1.addEventListener('click', () => modal?.classList.add('hidden'));
-        if (btnClose2) btnClose2.addEventListener('click', () => modal?.classList.add('hidden'));
-
-        // CRT Toggle Button
         const btnCrt = document.getElementById('btn-crt');
         const container = document.getElementById('canvas-container');
         if (btnCrt && container) {
@@ -2687,10 +2609,67 @@
             container.classList.toggle('crt-overlay');
           });
         }
+
+        const cheatModal = document.getElementById('cheat-sheet-modal');
+        const btnCheat = document.getElementById('btn-cheat-sheet');
+        const btnCloseCheat = document.getElementById('btn-close-modal');
+        const btnCloseCheat2 = document.getElementById('btn-close-modal-2');
+
+        if (btnCheat && cheatModal) {
+          btnCheat.addEventListener('click', () => cheatModal.classList.remove('hidden'));
+        }
+        if (btnCloseCheat && cheatModal) {
+          btnCloseCheat.addEventListener('click', () => cheatModal.classList.add('hidden'));
+        }
+        if (btnCloseCheat2 && cheatModal) {
+          btnCloseCheat2.addEventListener('click', () => cheatModal.classList.add('hidden'));
+        }
+
+        // Video Player Window Listeners
+        const videoModal = document.getElementById('video-modal');
+        const btnVideo = document.getElementById('btn-toggle-video');
+        const btnCloseVideo = document.getElementById('btn-close-video');
+
+        if (btnVideo && videoModal) {
+          btnVideo.addEventListener('click', () => {
+            videoModal.classList.toggle('hidden');
+          });
+        }
+
+        if (btnCloseVideo && videoModal) {
+          btnCloseVideo.addEventListener('click', () => {
+            videoModal.classList.add('hidden');
+          });
+        }
+
+        // Replay Controls
+        const btnStartReplay = document.getElementById('btn-start-replay');
+        if (btnStartReplay) {
+          btnStartReplay.addEventListener('click', () => this.startReplay());
+        }
+
+        const btnExitReplay = document.getElementById('btn-exit-replay');
+        if (btnExitReplay) {
+          btnExitReplay.addEventListener('click', () => this.exitReplay());
+        }
+
+        const btnReplayPlay = document.getElementById('btn-replay-play');
+        if (btnReplayPlay) {
+          btnReplayPlay.addEventListener('click', () => this.toggleReplayPlay());
+        }
+
+        const btnReplayPrev = document.getElementById('btn-replay-prev');
+        if (btnReplayPrev) {
+          btnReplayPrev.addEventListener('click', () => this.goToReplayStep(this.replayStep - 1));
+        }
+
+        const btnReplayNext = document.getElementById('btn-replay-next');
+        if (btnReplayNext) {
+          btnReplayNext.addEventListener('click', () => this.goToReplayStep(this.replayStep + 1));
+        }
       }
     }
 
-    // Launch Engine
     window.addEventListener('DOMContentLoaded', () => {
       window.gameEngine = new GameEngine();
     });
