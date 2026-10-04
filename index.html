@@ -156,25 +156,25 @@
               </div>
 
               <div title="Banana: 4 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
-                <span class="text-xs">🍌</span><strong class="text-yellow-400 text-[11px]">4</strong>
+                <span class="text-xl">🍌</span><strong class="text-yellow-400 text-[11px]">4</strong>
               </div>
               <div title="Pear: 5 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
-                <span class="text-xs">🍐</span><strong class="text-yellow-400 text-[11px]">5</strong>
+                <span class="text-xl">🍐</span><strong class="text-yellow-400 text-[11px]">5</strong>
               </div>
               <div title="Apple: 10 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
-                <span class="text-xs">🍎</span><strong class="text-yellow-400 text-[11px]">10</strong>
+                <span class="text-xl">🍎</span><strong class="text-yellow-400 text-[11px]">10</strong>
               </div>
               <div title="Pretzel: 20 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
-                <span class="text-xs">🥨</span><strong class="text-yellow-400 text-[11px]">20</strong>
+                <span class="text-xl">🥨</span><strong class="text-yellow-400 text-[11px]">20</strong>
               </div>
               <div title="Orange: 25 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
-                <span class="text-xs">🍊</span><strong class="text-yellow-400 text-[11px]">25</strong>
+                <span class="text-xl">🍊</span><strong class="text-yellow-400 text-[11px]">25</strong>
               </div>
               <div title="Strawberry: 30 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
-                <span class="text-xs">🍓</span><strong class="text-yellow-400 text-[11px]">30</strong>
+                <span class="text-xl">🍓</span><strong class="text-yellow-400 text-[11px]">30</strong>
               </div>
               <div title="Cherries: 40 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
-                <span class="text-xs">🍒</span><strong class="text-yellow-400 text-[11px]">40</strong>
+                <span class="text-xl">🍒</span><strong class="text-yellow-400 text-[11px]">40</strong>
               </div>
 
               <div title="Purple Ghost: 100 pts" class="w-full flex items-center justify-between bg-purple-950/80 px-2 py-1 rounded border border-purple-500/50">
@@ -2284,7 +2284,7 @@
           if (f.eaten) return;
           const pt = this.gridToPixel(f.x, f.y);
           ctx.save();
-          ctx.font = `${14 * dpr}px sans-serif`;
+          ctx.font = `${20 * dpr}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(fruitIcons[f.type] || '🍎', pt.px, pt.py);
