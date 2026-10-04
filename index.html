@@ -98,18 +98,18 @@
 
       <!-- Control Toolbar -->
       <div class="flex items-center gap-2">
-        <button id="btn-save-indicator" title="Auto-Save Enabled" class="px-2.5 py-1.5 rounded-lg bg-emerald-950/80 text-emerald-400 border border-emerald-700/60 text-xs font-semibold flex items-center gap-1.5">
+        <div id="btn-save-indicator" title="Auto-Save Enabled" class="opacity-0 invisible transition-all duration-500 px-2.5 py-1.5 rounded-lg bg-emerald-950/90 text-emerald-400 border border-emerald-500/60 text-xs font-semibold flex items-center gap-1.5 shadow-lg backdrop-blur-md shrink-0">
           <i class="fa-solid fa-floppy-disk text-xs"></i>
           <span class="hidden md:inline">Auto-Saved</span>
+        </div>
+
+        <!-- CRT Scanline Toggle Button -->
+        <button id="btn-toggle-scanlines" title="Toggle Scanlines Effect" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 font-semibold text-xs border border-cyan-500/50 shadow flex items-center gap-1.5 transition cursor-pointer shrink-0">
+          <i class="fa-solid fa-tv text-xs"></i>
         </button>
-        <button id="btn-toggle-video" title="Toggle Video Player Window" class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs border border-cyan-400 shadow flex items-center gap-1.5 transition">
-          <i class="fa-solid fa-circle-play"></i>
-          <span class="hidden sm:inline">Watch Video</span>
-        </button>
-        <button id="btn-crt" title="Toggle CRT Screen Glow" class="p-2 w-9 h-9 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition">
-          <i class="fa-solid fa-tv text-sm"></i>
-        </button>
-        <button id="btn-cheat-sheet" title="Transformation Syntax Reference" class="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white font-semibold text-xs border border-pink-400 shadow flex items-center gap-1.5 transition">
+
+        <!-- Syntax Guide Button -->
+        <button id="btn-cheat-sheet" title="Transformation Syntax Reference" class="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white font-semibold text-xs border border-pink-400 shadow flex items-center gap-1.5 transition cursor-pointer shrink-0">
           <i class="fa-solid fa-book-open"></i>
           <span class="hidden sm:inline">Syntax Guide</span>
         </button>
@@ -121,127 +121,140 @@
   <!-- Main Game Workspace -->
   <main class="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
     
-    <!-- LEFT COLUMN: Coordinate Grid Canvas -->
-    <section class="lg:col-span-7 xl:col-span-8 flex flex-col items-center justify-center bg-slate-900/90 rounded-2xl border-2 border-blue-500/40 p-2 sm:p-3 glow-blue relative overflow-hidden">
+    <!-- LEFT COLUMN: Coordinate Grid Canvas & Step History -->
+    <section class="lg:col-span-7 xl:col-span-8 flex flex-col gap-4">
       
-      <!-- Canvas Header Bar -->
-      <div class="w-full flex items-center justify-between mb-2 px-2 text-xs">
-        <div class="flex items-center gap-2">
-          <span class="font-arcade text-[10px] text-blue-400">TASK:</span>
-          <select id="level-select" class="bg-slate-950 text-yellow-300 font-arcade text-[10px] px-2 py-1 rounded border border-blue-700/60 focus:outline-none focus:border-yellow-400 cursor-pointer">
-            <option value="1">Level 1: Play with the video</option>
-            <option value="2">Level 2: Part 2 - Normal Mode (Max 20 Moves)</option>
-            <option value="3">Level 3: Part 2 - Hard Mode (Max 20 Moves)</option>
-            <option value="4">Level 4: Free play</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Fruit Point Values Panel -->
-      <div id="fruit-legend" class="w-full hidden bg-slate-950/90 border border-amber-500/40 rounded-xl p-2 mb-2">
-        <div class="text-[10px] font-arcade text-amber-400 mb-1 flex items-center gap-1.5 justify-center">
-          <i class="fa-solid fa-star"></i> FRUIT POINT VALUES
-        </div>
-        <div class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-slate-200 font-mono">
-          <span>🍌 Banana: <strong class="text-yellow-400">4 pts</strong></span>
-          <span>🍐 Pear: <strong class="text-yellow-400">5 pts</strong></span>
-          <span>🍎 Apple: <strong class="text-yellow-400">10 pts</strong></span>
-          <span>🥨 Pretzel: <strong class="text-yellow-400">20 pts</strong></span>
-          <span>🍊 Orange: <strong class="text-yellow-400">25 pts</strong></span>
-          <span>🍓 Strawberry: <strong class="text-yellow-400">30 pts</strong></span>
-          <span>🍒 Cherries: <strong class="text-yellow-400">40 pts</strong></span>
-        </div>
-      </div>
-
-      <!-- Main Canvas Wrapper -->
-      <div id="canvas-container" class="relative w-full aspect-[27/28] max-w-[620px] flex items-center justify-center bg-slate-950 rounded-xl border border-slate-800 shadow-2xl overflow-hidden crt-overlay">
-        <canvas id="game-canvas" class="w-full h-full block rounded-xl"></canvas>
-
-        <!-- Game Over Overlay Modal -->
-        <div id="game-over-modal" class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-4 hidden">
-          <div class="bg-slate-900 border-2 border-red-500/80 rounded-2xl p-6 max-w-xs w-full text-center shadow-2xl flex flex-col items-center gap-4 glow-red">
-            <div class="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/40 flex items-center justify-center text-red-500 text-2xl animate-pulse">
-              <i class="fa-solid fa-ghost"></i>
-            </div>
-            <div>
-              <h2 class="font-arcade text-sm text-red-500 tracking-wider mb-1">GAME OVER</h2>
-              <p id="game-over-level-title" class="text-[10px] font-arcade text-amber-400 mb-2">GHOST COLLISION</p>
-              <p id="game-over-desc" class="text-xs text-slate-300 font-sans-clean leading-relaxed">
-                Ms. Pac-Man attempted to pass through or land on a ghost!
-              </p>
-            </div>
-            <button id="btn-confirm-game-over" class="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white font-arcade text-xs rounded-xl shadow-lg border border-red-400 transition transform hover:scale-105 active:scale-95 cursor-pointer">
-              CONFIRM
-            </button>
-          </div>
-        </div>
-
-        <!-- Reset Level Confirmation Overlay Modal -->
-        <div id="reset-confirm-modal" class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-4 hidden">
-          <div class="bg-slate-900 border-2 border-yellow-500/80 rounded-2xl p-6 max-w-xs w-full text-center shadow-2xl flex flex-col items-center gap-4 glow-yellow">
-            <div class="w-12 h-12 rounded-full bg-yellow-500/10 border border-yellow-500/40 flex items-center justify-center text-yellow-400 text-2xl animate-pulse">
-              <i class="fa-solid fa-rotate-left"></i>
-            </div>
-            <div>
-              <h2 class="font-arcade text-sm text-yellow-400 tracking-wider mb-1">RESET LEVEL?</h2>
-              <p class="text-xs text-slate-300 font-sans-clean leading-relaxed">
-                Are you sure you want to reset the current level? All move history and progress for this level will be reset.
-              </p>
-            </div>
-            <div class="flex gap-2 w-full">
-              <button id="btn-confirm-reset" class="flex-1 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-arcade font-bold text-xs rounded-xl shadow-lg border border-yellow-300 transition transform hover:scale-105 active:scale-95 cursor-pointer">
-                CONFIRM
-              </button>
-              <button id="btn-cancel-reset" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-arcade font-bold text-xs rounded-xl shadow-lg border border-slate-600 transition transform hover:scale-105 active:scale-95 cursor-pointer">
-                CANCEL
-              </button>
-            </div>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- Canvas Footer Toolbar -->
-      <div class="w-full flex flex-col gap-2 mt-2.5 px-2 text-xs text-slate-400">
-        <!-- REPLAY CONTROL BAR -->
-        <div id="replay-bar" class="w-full bg-slate-950 border border-cyan-500/50 rounded-xl p-2 flex flex-wrap items-center justify-between gap-2 shadow-lg">
+      <!-- GAME TASK BOX -->
+      <div class="bg-slate-900/90 rounded-2xl border-2 border-blue-500/40 p-2 sm:p-3 glow-blue relative overflow-hidden flex flex-col items-center">
+        <!-- Canvas Header Bar -->
+        <div class="w-full flex items-center justify-between mb-2 px-2 text-xs">
           <div class="flex items-center gap-2">
-            <button id="btn-start-replay" disabled class="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 text-white disabled:text-slate-500 font-semibold text-xs border border-cyan-400/60 disabled:border-slate-700 shadow flex items-center gap-1.5 transition active:scale-95 disabled:pointer-events-none cursor-pointer">
-              <i class="fa-solid fa-film"></i>
-              <span>Replay Steps</span>
-            </button>
-            <span id="replay-badge" class="hidden text-[10px] font-arcade bg-cyan-950 text-cyan-300 border border-cyan-700/60 px-2.5 py-1 rounded-full animate-pulse">
-              👻 GHOST REPLAY ACTIVE
-            </span>
+            <span class="font-arcade text-[10px] text-blue-400">TASK:</span>
+            <select id="level-select" class="bg-slate-950 text-yellow-300 font-arcade text-[10px] px-2 py-1 rounded border border-blue-700/60 focus:outline-none focus:border-yellow-400 cursor-pointer">
+              <option value="1">Level 1: Play with the video</option>
+              <option value="2">Level 2: Part 2 - Normal Mode (Max 20 Moves)</option>
+              <option value="3">Level 3: Part 2 - Hard Mode (Max 20 Moves)</option>
+              <option value="4">Level 4: Free play</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="w-full flex flex-col md:flex-row items-stretch justify-center gap-10">
+          
+          <!-- Point Values Box -->
+          <div id="fruit-legend" class="hidden flex-row md:flex-col items-center justify-between bg-slate-950/90 border border-amber-500/40 rounded-xl p-2.5 shadow-xl shrink-0 gap-2 w-full md:w-20">
+            <div class="text-[9px] font-arcade text-amber-400 border-b border-amber-500/30 pb-1 w-full text-center hidden md:block">
+              POINT VALUES
+            </div>
+            
+            <div class="flex flex-row md:flex-col items-center justify-between w-full h-full gap-1.5 text-xs font-mono">
+              <div title="Small Dot: 1 pt" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
+                <span class="text-xs" style="font-size: 5px;">⚪</span><strong class="text-yellow-400 text-[11px]">1</strong>
+              </div>
+              <div title="Large Dot: 2 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
+                <span class="text-xs" style="font-size: 15px;">⚪</span><strong class="text-yellow-400 text-[11px]">2</strong>
+              </div>
+
+              <div title="Banana: 4 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
+                <span class="text-xs">🍌</span><strong class="text-yellow-400 text-[11px]">4</strong>
+              </div>
+              <div title="Pear: 5 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
+                <span class="text-xs">🍐</span><strong class="text-yellow-400 text-[11px]">5</strong>
+              </div>
+              <div title="Apple: 10 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
+                <span class="text-xs">🍎</span><strong class="text-yellow-400 text-[11px]">10</strong>
+              </div>
+              <div title="Pretzel: 20 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
+                <span class="text-xs">🥨</span><strong class="text-yellow-400 text-[11px]">20</strong>
+              </div>
+              <div title="Orange: 25 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
+                <span class="text-xs">🍊</span><strong class="text-yellow-400 text-[11px]">25</strong>
+              </div>
+              <div title="Strawberry: 30 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
+                <span class="text-xs">🍓</span><strong class="text-yellow-400 text-[11px]">30</strong>
+              </div>
+              <div title="Cherries: 40 pts" class="w-full flex items-center justify-between bg-slate-900/80 px-2 py-1 rounded border border-slate-800">
+                <span class="text-xs">🍒</span><strong class="text-yellow-400 text-[11px]">40</strong>
+              </div>
+
+              <div title="Purple Ghost: 100 pts" class="w-full flex items-center justify-between bg-purple-950/80 px-2 py-1 rounded border border-purple-500/50">
+                <div class="flex items-center justify-center">
+                  <i class="fa-solid fa-ghost text-purple-400 text-xl"></i>
+                </div>
+                <strong class="text-purple-300 text-[11px]">100</strong>
+              </div>
+            </div>
           </div>
 
-          <!-- Active Replay Animation Controls -->
-          <div id="replay-controls" class="hidden flex flex-wrap items-center gap-2">
-            <button id="btn-replay-prev" title="Rewind Step Back" class="p-1.5 w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition flex items-center justify-center active:scale-95 cursor-pointer">
-              <i class="fa-solid fa-backward-step text-xs"></i>
-            </button>
-            <button id="btn-replay-play" title="Play / Pause Replay" class="p-1.5 w-8 h-8 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white border border-cyan-400 transition flex items-center justify-center active:scale-95 shadow cursor-pointer">
-              <i id="icon-replay-play" class="fa-solid fa-pause text-xs"></i>
-            </button>
-            <button id="btn-replay-next" title="Step Forward" class="p-1.5 w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition flex items-center justify-center active:scale-95 cursor-pointer">
-              <i class="fa-solid fa-forward-step text-xs"></i>
-            </button>
+          <!-- Main Canvas Wrapper -->
+          <div id="canvas-container" class="relative w-full aspect-[27/28] max-w-[620px] flex items-center justify-center bg-slate-950 rounded-xl border border-slate-800 shadow-2xl overflow-hidden crt-overlay">
+            <canvas id="game-canvas" class="w-full h-full block rounded-xl"></canvas>
 
-            <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 px-2.5 py-1 rounded-lg text-xs font-mono">
-              <span id="replay-step-info" class="text-cyan-300 font-bold">Step 1 / 1</span>
-              <span id="replay-delay-timer" class="text-yellow-400 text-[11px] font-bold bg-yellow-950/60 border border-yellow-700/50 px-1.5 py-0.5 rounded">⏱️ 5.0s</span>
+            <!-- Game Over Overlay Modal -->
+            <div id="game-over-modal" class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-4 hidden">
+              <div class="bg-slate-900 border-2 border-red-500/80 rounded-2xl p-6 max-w-xs w-full text-center shadow-2xl flex flex-col items-center gap-4 glow-red">
+                <div class="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/40 flex items-center justify-center text-red-500 text-2xl animate-pulse">
+                  <i class="fa-solid fa-ghost"></i>
+                </div>
+                <div>
+                  <h2 class="font-arcade text-sm text-red-500 tracking-wider mb-1">GAME OVER</h2>
+                  <p id="game-over-level-title" class="text-[10px] font-arcade text-amber-400 mb-2">GHOST COLLISION</p>
+                  <p id="game-over-desc" class="text-xs text-slate-300 font-sans-clean leading-relaxed">
+                    Ms. Pac-Man attempted to pass through or land on a ghost!
+                  </p>
+                </div>
+                <button id="btn-confirm-game-over" class="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white font-arcade text-xs rounded-xl shadow-lg border border-red-400 transition transform hover:scale-105 active:scale-95 cursor-pointer">
+                  CONFIRM
+                </button>
+              </div>
             </div>
 
-            <button id="btn-exit-replay" title="Exit Replay Mode" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-red-950 hover:text-red-300 text-slate-300 text-xs border border-slate-700 transition cursor-pointer">
-              <i class="fa-solid fa-xmark mr-1"></i> Exit
-            </button>
+            <!-- Reset Level Confirmation Overlay Modal -->
+            <div id="reset-confirm-modal" class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-4 hidden">
+              <div class="bg-slate-900 border-2 border-yellow-500/80 rounded-2xl p-6 max-w-xs w-full text-center shadow-2xl flex flex-col items-center gap-4 glow-yellow">
+                <div class="w-12 h-12 rounded-full bg-yellow-500/10 border border-yellow-500/40 flex items-center justify-center text-yellow-400 text-2xl animate-pulse">
+                  <i class="fa-solid fa-rotate-left"></i>
+                </div>
+                <div>
+                  <h2 class="font-arcade text-sm text-yellow-400 tracking-wider mb-1">RESET LEVEL?</h2>
+                  <p class="text-xs text-slate-300 font-sans-clean leading-relaxed">
+                    Are you sure you want to reset the current level? All move history and progress for this level will be reset.
+                  </p>
+                </div>
+                <div class="flex gap-2 w-full">
+                  <button id="btn-confirm-reset" class="flex-1 py-2.5 bg-yellow-500 hover:bg-yellow-400 text-slate-950 font-arcade font-bold text-xs rounded-xl shadow-lg border border-yellow-300 transition transform hover:scale-105 active:scale-95 cursor-pointer">
+                    CONFIRM
+                  </button>
+                  <button id="btn-cancel-reset" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-arcade font-bold text-xs rounded-xl shadow-lg border border-slate-600 transition transform hover:scale-105 active:scale-95 cursor-pointer">
+                    CANCEL
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </div>
+
+        </div>
+
+
+      </div>
+
+      <!-- STEP HISTORY BOX -->
+      <div class="bg-slate-900 rounded-2xl border-2 border-blue-500/40 p-4 shadow-xl flex flex-col gap-3 min-h-[220px]">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+          <h3 class="font-arcade text-xs text-blue-400 flex items-center gap-2">
+            <i class="fa-solid fa-clock-rotate-left"></i> STEP HISTORY
+          </h3>
+        </div>
+
+        <div id="history-list" class="w-full overflow-y-auto max-h-[520px] pr-1 scroll-smooth">
+          <!-- Populated dynamically with side-by-side tables for Level 1 -->
         </div>
       </div>
 
     </section>
 
-    <!-- RIGHT COLUMN: Console Input, Quick Presets & Step History -->
+    <!-- RIGHT COLUMN: Console Input, Presets & Rules/Video Tab -->
     <section class="lg:col-span-5 xl:col-span-4 flex flex-col gap-4">
       
       <!-- Command Console Box -->
@@ -250,7 +263,6 @@
           <h2 class="font-arcade text-xs text-pink-400 text-glow-pink flex items-center gap-2">
             <i class="fa-solid fa-terminal text-sm"></i> TRANSFORM CONSOLE
           </h2>
-          <span class="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full border border-slate-700">Command Input</span>
         </div>
 
         <form id="command-form" class="flex flex-col gap-2">
@@ -269,14 +281,14 @@
           </div>
         </form>
 
-        <!-- Feedback & Error Notification Bar -->
+        <!-- Feedback Notification Bar -->
         <div id="feedback-msg" class="hidden p-2.5 rounded-lg text-xs font-semibold flex items-center gap-2 transition-all">
           <i id="feedback-icon" class="fa-solid text-sm shrink-0"></i>
           <span id="feedback-text"></span>
         </div>
 
         <!-- QUICK PRESETS -->
-        <div class="pt-1">
+        <div class="pt-1 border-t-2 border-pink-500/40 my-1">
           <div class="flex items-center justify-between mb-2">
             <span class="text-[11px] text-slate-300 font-semibold flex items-center gap-1.5">
               <i class="fa-solid fa-rotate text-yellow-400"></i> Quick Rotation Controls:
@@ -293,21 +305,61 @@
             </button>
           </div>
 
-          <!-- FACING & ORIENTATION RULES BOX -->
-          <p class="text-[10px] text-slate-400 mt-2.5 leading-relaxed bg-slate-950 p-2.5 rounded-lg border border-slate-800">
-            <i class="fa-solid fa-compass text-green-400 mr-1"></i>
-            <strong>Facing & Orientation Rules:</strong>
-            <br>&bull; Ms. Pac-Man can only move straight in the direction she faces.
-            <br>&bull; If upside down, she cannot move until restored upright.
-            <br>&bull; <strong>Up/Down Movement & Bow Orientation:</strong>
-            <br>&nbsp;&nbsp;&bull; <strong>Level 1:</strong> Moving UP requires Bow on LEFT. Moving DOWN requires Bow on RIGHT.
-            <br>&nbsp;&nbsp;&bull; <strong>Levels 2, 3, & 4:</strong> Bow position (left/right) does not matter for Up/Down movement.
-            <br>&bull; <strong>Rotations (Levels 1–3):</strong> Rotations are restricted to Ms. Pac-Man's current location.
-          </p>
+          <!-- TOGGLE CONTAINER: RULES & VIDEO PLAYER -->
+          <div class="mt-3 pt-3 border-t-2 border-pink-500/40">
+            <!-- Toggle Buttons Bar -->
+            <div class="flex items-center justify-between mb-2 bg-slate-950 p-1 rounded-xl border border-slate-800">
+              <button id="tab-btn-rules" type="button" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-slate-400 hover:text-white cursor-pointer">
+                <i class="fa-solid fa-compass text-green-300"></i>
+                <span>Facing & Rules</span>
+              </button>
+              <button id="tab-btn-video" type="button" class="flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-pink-600 text-white shadow cursor-pointer">
+                <i class="fa-solid fa-circle-play text-cyan-400"></i>
+                <span>Lesson Video</span>
+              </button>
+            </div>
+
+            <!-- Tab Content 1: Rules -->
+            <div id="tab-content-rules" class="hidden">
+              <p class="text-[10px] text-slate-400 leading-relaxed bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                <i class="fa-solid fa-compass text-green-400 mr-1"></i>
+                <strong>Facing & Orientation Rules:</strong>
+                <br>&bull; <strong>Starting Position:</strong> Bow on TOP, mouth facing LEFT.
+                <br>&bull; <strong>Left/Right Movement:</strong> Requires Bow on TOP for ALL levels.
+                <br>&bull; <strong>Up/Down Movement:</strong>
+                <br>&nbsp;&nbsp;&bull; <strong>Level 1:</strong> Moving UP requires Bow on LEFT. Moving DOWN requires Bow on RIGHT.
+                <br>&nbsp;&nbsp;&bull; <strong>Levels 2, 3, & 4:</strong> Bow position restriction removed for Up/Down movement.
+                <br>&bull; <strong>Upside Down:</strong> If upside down (bow on bottom), Ms. Pac-Man cannot move left/right until corrected.
+                <br>&bull; <strong>Rotations (Levels 1–3):</strong> Rotations restricted to Ms. Pac-Man's current location.
+              </p>
+            </div>
+
+            <!-- Tab Content 2: Embedded Video Player + Speed Control Toolbar -->
+            <div id="tab-content-video" class="block">
+              <div class="relative w-full aspect-[1228/1434] max-h-[520px] mx-auto rounded-xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner flex flex-col items-center justify-center p-2">
+                <video id="video-player" controls playsinline muted class="w-full h-full object-contain rounded-xl">
+                  <source src="Ms Pac-Man Project Video.mp4" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+                <!-- Speed Control Bar -->
+                <div class="w-full bg-slate-900/90 border border-slate-800 p-2 rounded-xl mt-2 flex items-center justify-between gap-2 text-xs">
+                  <span class="text-slate-300 font-semibold text-[11px] flex items-center gap-1">
+                    <i class="fa-solid fa-gauge-high text-cyan-400"></i> Speed:
+                  </span>
+                  <div class="flex items-center gap-1 font-mono" id="video-speed-controls">
+                    <button type="button" class="video-speed-btn px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer" data-speed="0.25">0.25x</button>
+                    <button type="button" class="video-speed-btn px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer" data-speed="0.5">0.5x</button>
+                    <button type="button" class="video-speed-btn px-2 py-1 rounded-lg text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition cursor-pointer" data-speed="0.75">0.75x</button>
+                    <button type="button" class="video-speed-btn px-2 py-1 rounded-lg text-[11px] font-bold bg-pink-600 text-white border border-pink-400 transition cursor-pointer" data-speed="1">1.0x</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Action Controls -->
-        <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
+        <div class="flex items-center gap-2 pt-3 border-t-2 border-pink-500/40">
           <button id="btn-reset-level" class="flex-1 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 border border-slate-700 transition active:scale-95 cursor-pointer">
             <i class="fa-solid fa-rotate-left"></i> Reset Level
           </button>
@@ -318,52 +370,9 @@
 
       </div>
 
-      <!-- History Log Display -->
-      <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 flex flex-col gap-3 flex-1 min-h-[240px]">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-          <h3 class="font-arcade text-xs text-blue-400 flex items-center gap-2">
-            <i class="fa-solid fa-clock-rotate-left"></i> STEP HISTORY
-          </h3>
-          <span id="step-count" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">0 steps</span>
-        </div>
-
-        <div id="history-list" class="flex flex-col gap-2 overflow-y-auto max-h-[260px] pr-1 scroll-smooth">
-          <!-- Populated dynamically -->
-        </div>
-      </div>
-
     </section>
 
   </main>
-
-  <!-- Video Player Floating Window / Modal -->
-  <div id="video-modal" class="fixed bottom-4 right-4 z-50 w-full max-w-md bg-slate-900 border-2 border-cyan-500/80 rounded-2xl shadow-2xl glow-cyan flex flex-col overflow-hidden transition-all duration-300">
-    <!-- Video Window Header -->
-    <div class="bg-slate-950 border-b border-cyan-800/60 p-2.5 px-3.5 flex items-center justify-between select-none">
-      <div class="flex items-center gap-2">
-        <i class="fa-solid fa-circle-play text-cyan-400 text-sm animate-pulse"></i>
-        <h3 class="font-arcade text-[11px] text-cyan-300 text-glow-cyan">PAC-MAN LESSON VIDEO</h3>
-      </div>
-      <div class="flex items-center gap-2">
-        <button id="btn-close-video" class="text-slate-400 hover:text-white p-1 rounded transition text-xs cursor-pointer" title="Close Video Window">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-    </div>
-    <!-- Video Player Container -->
-    <div class="p-3 bg-slate-950/90 flex flex-col gap-2">
-      <div class="relative w-full aspect-video rounded-xl overflow-hidden bg-slate-900 border border-slate-800 shadow-inner flex items-center justify-center">
-        <video id="video-player" controls playsinline class="w-full h-full object-contain rounded-xl">
-          <source src="Ms Pac-Man Project Video.mp4" type="video/mp4">
-          Your browser does not support the video tag.
-        </video>
-      </div>
-      <p class="text-[11px] text-slate-400 px-1 font-sans-clean flex items-center gap-1.5">
-        <i class="fa-solid fa-circle-info text-cyan-400"></i>
-        <span>Watch the video to solve Level 1 transformation steps!</span>
-      </p>
-    </div>
-  </div>
 
   <!-- Syntax Reference Modal -->
   <div id="cheat-sheet-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden transition-opacity">
@@ -386,54 +395,53 @@
             <i class="fa-solid fa-circle-exclamation"></i> GAME RULES & CONSTRAINTS:
           </h4>
           <ul class="list-disc list-inside space-y-1 text-[11px]">
-            <li><strong>Facing Rule:</strong> Ms. Pac-Man can only move straight in the direction she faces (LEFT, RIGHT, UP, DOWN).</li>
-            <li><strong>Upside Down Constraint:</strong> If Ms. Pac-Man is upside down, she cannot move until reflected/rotated upright.</li>
-            <li><strong>Bow Orientation:</strong> Level 1 requires bow on LEFT to move UP and bow on RIGHT to move DOWN. Levels 2–4 do not require specific bow positions for vertical moves.</li>
+            <li><strong>Starting Position:</strong> Ms. Pac-Man starts with Bow on TOP and mouth facing LEFT.</li>
+            <li><strong>Left/Right Movement:</strong> Bow must be on TOP for all levels.</li>
+            <li><strong>Up/Down Bow Restrictions:</strong> Level 1 requires Bow on LEFT to move UP and Bow on RIGHT to move DOWN. Levels 2–4 remove left/right bow requirements for vertical movement.</li>
             <li><strong>Rotation Rules:</strong> Levels 1–3 only allow rotations at Ms. Pac-Man's current location. Level 4 allows rotation about any center point!</li>
-            <li><strong>Reflection Rules:</strong> Levels 1–3 require the reflection axis to match current x or y position. Level 4 allows any reflection!</li>
+            <li><strong>Reflection Rules:</strong> Levels 1–3 require reflection axis to match current x or y position. Level 4 allows any reflection!</li>
             <li><strong>Dilation (Level 4):</strong> Supports dilations k(x,y) where k is between 0.25 and 3.</li>
             <li><strong>Wall Rules:</strong> Rotations and reflections that land on a wall are not allowed.</li>
-            <li><strong>Ghost Rules (Levels 3 & 4):</strong> Stepping on normal ghosts causes Game Over. Eating power pellets turns ghosts purple; stepping on purple ghosts removes them (+100 pts).</li>
-            <li><strong>Auto-Save:</strong> Your position, history, and dot progress are stored automatically in your browser.</li>
+            <li><strong>Ghost Rules (Levels 3 & 4):</strong> Stepping on normal ghosts causes Game Over. Power pellets turn ghosts purple; stepping on purple ghosts removes them (+100 pts).</li>
           </ul>
         </div>
 
         <div class="bg-slate-950 p-3.5 rounded-xl border border-blue-800/60">
           <h3 class="font-bold text-blue-400 text-sm mb-1.5 flex items-center gap-2">
-            <i class="fa-solid fa-arrows-up-down-left-right text-xs"></i> 1. Translations (Move in Facing Direction)
+            <i class="fa-solid fa-arrows-up-down-left-right text-xs"></i> 1. Translations
           </h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
             <div class="bg-slate-900 p-2 rounded border border-slate-800 text-cyan-300">
-              <code>(x-2, y)</code> <span class="text-slate-400 text-[10px] block font-sans">Move Left 2 units (Must face LEFT)</span>
+              <code>(x-2, y)</code> <span class="text-slate-400 text-[10px] block font-sans">Move Left 2 units</span>
             </div>
             <div class="bg-slate-900 p-2 rounded border border-slate-800 text-cyan-300">
-              <code>(x+2, y)</code> <span class="text-slate-400 text-[10px] block font-sans">Move Right 2 units (Must face RIGHT)</span>
+              <code>(x+2, y)</code> <span class="text-slate-400 text-[10px] block font-sans">Move Right 2 units</span>
             </div>
             <div class="bg-slate-900 p-2 rounded border border-slate-800 text-cyan-300">
-              <code>(x, y+4)</code> <span class="text-slate-400 text-[10px] block font-sans">Move Up 4 units (Must face UP)</span>
+              <code>(x, y+4)</code> <span class="text-slate-400 text-[10px] block font-sans">Move Up 4 units</span>
             </div>
             <div class="bg-slate-900 p-2 rounded border border-slate-800 text-cyan-300">
-              <code>(x, y-3)</code> <span class="text-slate-400 text-[10px] block font-sans">Move Down 3 units (Must face DOWN)</span>
+              <code>(x, y-3)</code> <span class="text-slate-400 text-[10px] block font-sans">Move Down 3 units</span>
             </div>
           </div>
         </div>
 
         <div class="bg-slate-950 p-3.5 rounded-xl border border-yellow-800/60">
           <h3 class="font-bold text-yellow-400 text-sm mb-1.5 flex items-center gap-2">
-            <i class="fa-solid fa-rotate-right text-xs"></i> 2. Rotations (Current Spot or Center Point)
+            <i class="fa-solid fa-rotate-right text-xs"></i> 2. Rotations
           </h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
             <div class="bg-slate-900 p-2 rounded border border-slate-800 text-yellow-300">
-              <code>rotate 90 cw</code> <span class="text-slate-400 text-[10px] block font-sans">90° Clockwise on current spot (Levels 1–4)</span>
+              <code>rotate 90 cw</code> <span class="text-slate-400 text-[10px] block font-sans">90° Clockwise</span>
             </div>
             <div class="bg-slate-900 p-2 rounded border border-slate-800 text-yellow-300">
-              <code>rotate 90 ccw</code> <span class="text-slate-400 text-[10px] block font-sans">90° Counter-Clockwise on current spot (Levels 1–4)</span>
+              <code>rotate 90 ccw</code> <span class="text-slate-400 text-[10px] block font-sans">90° Counter-Clockwise</span>
             </div>
             <div class="bg-slate-900 p-2 rounded border border-slate-800 text-yellow-300">
-              <code>rotate 90 cw about (1,2)</code> <span class="text-slate-400 text-[10px] block font-sans">Rotate 90° CW around center point (1,2) (Level 4)</span>
+              <code>rotate 90 cw about (1,2)</code> <span class="text-slate-400 text-[10px] block font-sans">Rotate 90° CW around center (1,2) (Level 4)</span>
             </div>
             <div class="bg-slate-900 p-2 rounded border border-slate-800 text-yellow-300">
-              <code>rotate 180 cw about (0,0)</code> <span class="text-slate-400 text-[10px] block font-sans">Rotate 180° around center point (0,0) (Level 4)</span>
+              <code>rotate 180 cw about (0,0)</code> <span class="text-slate-400 text-[10px] block font-sans">Rotate 180° around center (0,0) (Level 4)</span>
             </div>
           </div>
         </div>
@@ -460,7 +468,7 @@
 
         <div class="bg-slate-950 p-3.5 rounded-xl border border-purple-800/60">
           <h3 class="font-bold text-purple-400 text-sm mb-1.5 flex items-center gap-2">
-            <i class="fa-solid fa-expand text-xs"></i> 4. Dilations (Level 4 Free play)
+            <i class="fa-solid fa-expand text-xs"></i> 4. Dilations (Level 4)
           </h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
             <div class="bg-slate-900 p-2 rounded border border-slate-800 text-purple-300">
@@ -483,7 +491,7 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT GAME ENGINE & STORAGE LOGIC -->
+  <!-- JAVASCRIPT GAME ENGINE -->
   <script>
     class RetroAudioEngine {
       constructor() {
@@ -596,7 +604,7 @@
 
     const audio = new RetroAudioEngine();
 
-    /* CENTRALIZED WALL GEOMETRY CONFIGURATION */
+    /* CENTRALized WALL GEOMETRY CONFIGURATION */
     const WALL_RECTS = [
       { xMin: -13, xMax: 14, yMin: 14, yMax: 14, type: 1 },
       { xMin: -13, xMax: 14, yMin: -16, yMax: -16, type: 1 },
@@ -648,12 +656,10 @@
       { xMin: 3, xMax: 9, yMin: -14, yMax: -13, type: 1 },
       { xMin: 6, xMax: 7, yMin: -14, yMax: -10, type: 1 },
       { xMin: 0, xMax: 1, yMin: -17, yMax: -13, type: 1 },
-	  
       { xMin: -3, xMax: 4, yMin: -9, yMax: 5, type: 3 },
       { xMin: -6, xMax: 7, yMin: -5, yMax: 5, type: 3 },
       { xMin: -16, xMax: -10, yMin: -3, yMax: 2, type: 3 },
       { xMin: 9, xMax: 15, yMin: -3, yMax: 2, type: 3 },
-	  
       { xMin: -16, xMax: -13, yMin: -9, yMax: -7, type: 2 },
       { xMin: 14, xMax: 16, yMin: -9, yMax: -7, type: 2 },
       { xMin: -16, xMax: -13, yMin: 4, yMax: 6, type: 2 },
@@ -695,6 +701,9 @@
 
     /* 2x2 Matrix Helper Functions */
     const Matrix2x2 = {
+      // Canonical starting orientation: bow on TOP, mouth facing LEFT.
+      // The drawing code and movement rules both use this matrix as the
+      // upright/left-facing reference orientation.
       identity: () => [[1, 0], [0, 1]],
 
       multiply: (A, B) => [
@@ -747,18 +756,27 @@
 
     /* Level Settings Config */
     const LEVELS = {
-      1: { title: "Worksheet Guided Lesson", startX: 0, startY: -9, maxMoves: null, enforceBow: true },
-      2: { title: "Level 2: Part 2 - Normal Mode", startX: 0, startY: -9, maxMoves: 20, enforceBow: false },
-      3: { title: "Level 3: Part 2 - Hard Mode", startX: 0, startY: -9, maxMoves: 20, enforceBow: false },
-      4: { title: "Level 4: Free play", startX: 0, startY: -9, maxMoves: null, enforceBow: false }
+      // Horizontal movement always requires bow TOP.
+      // Only Level 1 adds the vertical bow-side requirements.
+      1: { title: "Worksheet Guided Lesson", startX: 0, startY: -9, maxMoves: 45, enforceVerticalBow: true },
+      2: { title: "Level 2: Part 2 - Normal Mode", startX: 0, startY: -9, maxMoves: 20, enforceVerticalBow: false },
+      3: { title: "Level 3: Part 2 - Hard Mode", startX: 0, startY: -9, maxMoves: 20, enforceVerticalBow: false },
+      4: { title: "Level 4: Free play", startX: 0, startY: -9, maxMoves: null, enforceVerticalBow: false }
     };
 
-    /* Ghost Coordinates for Levels 3 & 4 */
+    /* Ghost Positions for Map & Ghost House */
     const MAP_GHOSTS = [
       { id: 'blinky', name: 'Blinky', color: '#ef4444', x: -4, y: 13 },
       { id: 'pinky', name: 'Pinky', color: '#f472b6', x: -7, y: -9 },
       { id: 'inky', name: 'Inky', color: '#06b6d4', x: 11, y: 5 },
       { id: 'clyde', name: 'Clyde', color: '#f97316', x: 5, y: -7 }
+    ];
+
+    const GHOST_HOUSE_GHOSTS = [
+      { id: 'blinky', name: 'Blinky', color: '#ef4444' },
+      { id: 'pinky', name: 'Pinky', color: '#f472b6' },
+      { id: 'inky', name: 'Inky', color: '#06b6d4' },
+      { id: 'clyde', name: 'Clyde', color: '#f97316' }
     ];
 
     /* Standard Fruit Preset Data */
@@ -984,7 +1002,8 @@
         this.currentLevelId = null;
         this.levelStates = { 1: null, 2: null, 3: null, 4: null };
 
-        this.STORAGE_KEY = 'mspacman_transformations_save_data_v2';
+        this.STORAGE_KEY = 'mspacman_transformations_save_data_v4';
+        this.autoSaveTimeout = null;
 
         this.score = 0;
         this.showGameOver = false;
@@ -1014,15 +1033,15 @@
         this.replayStep = 0;
         this.replayPlaying = false;
         this.replayTimer = 0.0;
-        this.replayDelayMax = 5.0;
+        this.replayDelayMax = 5.0; // seconds between replay steps
         this.replayAnimProgress = 1.0;
         this.replayAnimStart = null;
         this.replayAnimTarget = null;
         this.lastTimestamp = null;
 
         // Mouth Animation
-        this.mouthOpen = 0.25;
-        this.mouthSpeed = 0.02;
+        this.mouthOpen = 0.30;
+        this.mouthSpeed = 0.025;
 
         this.pellets = [];
         this.fruits = [];
@@ -1030,7 +1049,6 @@
 
         this.initEventListeners();
         
-        // Attempt restoring from Local Storage
         const restored = this.loadFromLocalStorage();
         if (!restored) {
           this.loadLevel(1);
@@ -1042,7 +1060,23 @@
         requestAnimationFrame((t) => this.renderLoop(t));
       }
 
-      /* LOCAL STORAGE PERSISTENCE METHODS */
+      showAutoSaveToast() {
+        const ind = document.getElementById('btn-save-indicator');
+        if (!ind) return;
+
+        if (this.autoSaveTimeout) {
+          clearTimeout(this.autoSaveTimeout);
+        }
+
+        ind.classList.remove('opacity-0', 'invisible');
+        ind.classList.add('opacity-100', 'visible');
+
+        this.autoSaveTimeout = setTimeout(() => {
+          ind.classList.remove('opacity-100', 'visible');
+          ind.classList.add('opacity-0', 'invisible');
+        }, 3000);
+      }
+
       saveToLocalStorage() {
         try {
           this.saveCurrentLevelState();
@@ -1052,12 +1086,6 @@
             timestamp: Date.now()
           };
           localStorage.setItem(this.STORAGE_KEY, JSON.stringify(payload));
-          
-          const ind = document.getElementById('btn-save-indicator');
-          if (ind) {
-            ind.classList.add('glow-yellow');
-            setTimeout(() => ind.classList.remove('glow-yellow'), 500);
-          }
         } catch (e) {
           console.warn("Could not save to localStorage:", e);
         }
@@ -1073,7 +1101,6 @@
 
           this.levelStates = data.levelStates;
           this.loadLevel(data.currentLevelId, false);
-          this.showFeedback(`Restored saved progress for Level ${this.currentLevelId}!`, "info");
           return true;
         } catch (e) {
           console.warn("Error loading state from localStorage:", e);
@@ -1083,6 +1110,7 @@
 
       resizeCanvas() {
         const container = document.getElementById('canvas-container');
+        if (!container) return;
         const rect = container.getBoundingClientRect();
         this.canvas.width = rect.width * (window.devicePixelRatio || 1);
         this.canvas.height = rect.height * (window.devicePixelRatio || 1);
@@ -1108,6 +1136,11 @@
         for (let gx = -13; gx <= 14; gx++) {
           for (let gy = -15; gy <= 13; gy++) {
             if (gx === 0 && gy === -9) continue;
+
+            if (this.currentLevelId === 3 || this.currentLevelId === 4) {
+              const hasGhostOnSpot = MAP_GHOSTS.some(g => g.x === gx && g.y === gy);
+              if (hasGhostOnSpot) continue;
+            }
 
             if (activeFruits.some(f => f.x === gx && f.y === gy)) {
               continue;
@@ -1167,12 +1200,18 @@
       }
 
       loadLevel(levelId, forceReset = false) {
+        const isSwitching = (this.currentLevelId !== null && this.currentLevelId !== levelId);
+
         if (this.currentLevelId && this.currentLevelId !== levelId) {
           this.saveCurrentLevelState();
         }
 
         this.exitReplay();
         this.currentLevelId = levelId;
+
+        if (isSwitching) {
+          this.showAutoSaveToast();
+        }
 
         const modal = document.getElementById('game-over-modal');
         if (modal) modal.classList.add('hidden');
@@ -1186,10 +1225,25 @@
         }
 
         const fruitLegend = document.getElementById('fruit-legend');
-        if (levelId === 2 || levelId === 3 || levelId === 4) {
-          fruitLegend.classList.remove('hidden');
-        } else {
-          fruitLegend.classList.add('hidden');
+        if (fruitLegend) {
+          if (levelId === 2 || levelId === 3 || levelId === 4) {
+            fruitLegend.classList.remove('hidden');
+            fruitLegend.classList.add('flex');
+          } else {
+            fruitLegend.classList.add('hidden');
+            fruitLegend.classList.remove('flex');
+          }
+        }
+
+        const videoTabBtn = document.getElementById('tab-btn-video');
+        if (videoTabBtn) {
+          if (levelId === 1) {
+            videoTabBtn.classList.remove('hidden');
+            this.switchTab('video');
+          } else {
+            videoTabBtn.classList.add('hidden');
+            this.switchTab('rules');
+          }
         }
 
         if (!forceReset && this.levelStates[levelId]) {
@@ -1217,7 +1271,6 @@
 
           this.updateHUD();
           this.renderHistory();
-          this.showFeedback(`Loaded Level ${levelId} saved state.`, "info");
           this.saveToLocalStorage();
           return;
         }
@@ -1225,10 +1278,15 @@
         this.showGameOver = false;
         this.ghostsPurple = false;
 
-        if (levelId === 3 || levelId === 4) {
-          this.activeGhosts = MAP_GHOSTS.map(g => ({ ...g, removed: false }));
+        if (levelId === 1 || levelId === 2) {
+          this.activeGhosts = GHOST_HOUSE_GHOSTS.map(g => ({
+            ...g,
+            x: -2.0 + Math.random() * 5.0,
+            y: -1.2 + Math.random() * 2.4,
+            removed: false
+          }));
         } else {
-          this.activeGhosts = [];
+          this.activeGhosts = MAP_GHOSTS.map(g => ({ ...g, removed: false }));
         }
 
         const cfg = LEVELS[levelId];
@@ -1236,6 +1294,7 @@
         this.x = cfg.startX;
         this.y = cfg.startY;
         this.scale = 1.0;
+        // Canonical start: bow TOP, mouth LEFT at (0, -9).
         this.matrix = Matrix2x2.identity();
 
         this.preX = cfg.startX;
@@ -1363,12 +1422,6 @@
 
         const { bx, by } = Matrix2x2.getBowVector(this.matrix);
 
-        if (parsed.type === 'translation' && by < 0) {
-          audio.playError();
-          this.showFeedback(`Upside Down Constraint! Ms. Pac-Man is upside down. Reflect or rotate her upright before moving!`, "error");
-          return;
-        }
-
         let visitedPath = [{ x: this.x, y: this.y }];
         const preGhostsPurple = this.ghostsPurple;
         let isTeleported = false;
@@ -1395,6 +1448,14 @@
             return;
           }
 
+          if (moveDx !== 0) {
+            if (by !== 1 || bx !== 0) {
+              audio.playError();
+              this.showFeedback(`Bow Constraint! Moving Left/Right requires Ms. Pac-Man's bow to be on TOP. Rotate or reflect her upright first!`, "error");
+              return;
+            }
+          }
+
           let neededDirection = '';
           let isValidFacing = false;
 
@@ -1408,18 +1469,18 @@
             neededDirection = 'UP';
             isValidFacing = (fx === 0 && fy === 1);
             
-            if (levelCfg.enforceBow && isValidFacing && bx !== -1) {
+            if (levelCfg.enforceVerticalBow && isValidFacing && (bx !== -1 || by !== 0)) {
               audio.playError();
-              this.showFeedback(`Bow Constraint! To move UP in Level 1, Ms. Pac-Man's bow must be on her LEFT side. Reflect or rotate her first!`, "error");
+              this.showFeedback(`Bow Constraint! To move UP in Level 1, Ms. Pac-Man's bow must be on her LEFT side.`, "error");
               return;
             }
           } else if (moveDy < 0 && moveDx === 0) {
             neededDirection = 'DOWN';
             isValidFacing = (fx === 0 && fy === -1);
 
-            if (levelCfg.enforceBow && isValidFacing && bx !== 1) {
+            if (levelCfg.enforceVerticalBow && isValidFacing && (bx !== 1 || by !== 0)) {
               audio.playError();
-              this.showFeedback(`Bow Constraint! To move DOWN in Level 1, Ms. Pac-Man's bow must be on her RIGHT side. Reflect or rotate her first!`, "error");
+              this.showFeedback(`Bow Constraint! To move DOWN in Level 1, Ms. Pac-Man's bow must be on her RIGHT side.`, "error");
               return;
             }
           }
@@ -1570,7 +1631,7 @@
 
         this.saveToLocalStorage();
 
-        let feedbackText = `Applied: ${parsed.notation} ➔ Pos: (${this.x}, ${this.y}) | Facing: ${Matrix2x2.getFacingName(this.matrix)}`;
+        let feedbackText = `Applied: ${parsed.notation} ➔ Pos: (${this.x}, ${this.y})`;
         if (parsed.type === 'dilation') {
           feedbackText += ` | Size Scale: ${this.scale}x`;
         }
@@ -1628,7 +1689,7 @@
         this.saveToLocalStorage();
         this.updateHUD();
         this.renderHistory();
-        this.showFeedback(`Undid step! Returned to (${this.x}, ${this.y}) | Facing: ${Matrix2x2.getFacingName(this.matrix)}`, "info");
+        this.showFeedback(`Undid step! Returned to (${this.x}, ${this.y})`, "info");
       }
 
       /* REPLAY SYSTEM METHODS */
@@ -1639,7 +1700,7 @@
           y: levelCfg.startY,
           matrix: Matrix2x2.identity(),
           scale: 1.0,
-          notation: 'Start Position'
+          notation: 'Starting Position'
         }];
 
         const chronologicalHistory = [...this.history].reverse();
@@ -1689,13 +1750,14 @@
         this.replayTimer = 0.0;
 
         this.updateReplayUI();
-        this.showFeedback("Ghost Replay started! Retracing steps with 5-second delay per step.", "info");
+        this.showFeedback("Ghost Replay started! Retracing steps with a 5-second delay between steps.", "info");
       }
 
       exitReplay() {
         if (!this.isReplayActive) return;
         this.isReplayActive = false;
         this.replayPlaying = false;
+        this._lastHighlightedReplayStep = null;
         this.updateReplayUI();
         this.showFeedback("Exited Ghost Replay mode.", "info");
       }
@@ -1755,9 +1817,25 @@
             if (!this.replayPlaying) {
               delayTimer.innerText = 'PAUSED';
             } else {
-              const remaining = Math.max(0, 5.0 - this.replayTimer);
+              const remaining = Math.max(0, this.replayDelayMax - this.replayTimer);
               delayTimer.innerText = `⏱️ ${remaining.toFixed(1)}s`;
             }
+          }
+
+          const prevBtn = document.getElementById('btn-replay-prev');
+          const nextBtn = document.getElementById('btn-replay-next');
+          const atStart = this.replayStep <= 0;
+          const atEnd = this.replayStep >= states.length - 1;
+
+          if (prevBtn) {
+            prevBtn.disabled = atStart;
+            prevBtn.classList.toggle('opacity-40', atStart);
+            prevBtn.classList.toggle('pointer-events-none', atStart);
+          }
+          if (nextBtn) {
+            nextBtn.disabled = atEnd;
+            nextBtn.classList.toggle('opacity-40', atEnd);
+            nextBtn.classList.toggle('pointer-events-none', atEnd);
           }
         } else {
           if (controls) controls.classList.add('hidden');
@@ -1780,14 +1858,21 @@
             item.classList.add('border-cyan-400', 'bg-cyan-950/90', 'ring-2', 'ring-cyan-400/60', 'glow-cyan');
             item.classList.remove('border-slate-800', 'bg-slate-950/60');
             if (badge) badge.classList.remove('hidden');
+            item.setAttribute('aria-current', 'step');
 
-            item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            // Only scroll when the active step changes, not every animation frame.
+            if (this._lastHighlightedReplayStep !== this.replayStep) {
+              item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
           } else {
             item.classList.remove('border-cyan-400', 'bg-cyan-950/90', 'ring-2', 'ring-cyan-400/60', 'glow-cyan');
             item.classList.add('border-slate-800', 'bg-slate-950/60');
             if (badge) badge.classList.add('hidden');
+            item.removeAttribute('aria-current');
           }
         });
+
+        this._lastHighlightedReplayStep = this.isReplayActive ? this.replayStep : null;
       }
 
       gridToPixel(gx, gy) {
@@ -1811,7 +1896,7 @@
         this.lastTimestamp = timestamp;
 
         this.mouthOpen += this.mouthSpeed;
-        if (this.mouthOpen > 0.38 || this.mouthOpen < 0.08) {
+        if (this.mouthOpen > 0.48 || this.mouthOpen < 0.10) {
           this.mouthSpeed = -this.mouthSpeed;
         }
 
@@ -1827,6 +1912,8 @@
           const states = this.getChronologicalStates();
 
           if (this.replayAnimProgress < 1.0) {
+            // Move the ghost smoothly to the selected step, then begin the
+            // full five-second dwell before advancing to the next step.
             this.replayAnimProgress += dt / 0.7;
             if (this.replayAnimProgress >= 1.0) {
               this.replayAnimProgress = 1.0;
@@ -1835,7 +1922,7 @@
           } else if (this.replayPlaying) {
             if (this.replayStep < states.length - 1) {
               this.replayTimer += dt;
-              if (this.replayTimer >= 5.0) {
+              if (this.replayTimer >= this.replayDelayMax) {
                 this.goToReplayStep(this.replayStep + 1);
               }
             } else {
@@ -1851,6 +1938,7 @@
         this.drawAxesAndNumbers();
         this.drawPellets();
         this.drawFruits();
+        this.drawGhosts();
 
         if (this.isReplayActive) {
           this.drawReplayTrail();
@@ -1929,7 +2017,7 @@
 
         ctx.transform(a, b, c, d, pt.px, pt.py);
 
-        const R = 0.6375;
+        const R = 0.65;
 
         ctx.shadowColor = '#06b6d4';
         ctx.shadowBlur = 16 * dpr;
@@ -1954,24 +2042,6 @@
         ctx.arc(0, 0, R * 0.82, startAngle, endAngle, false);
         ctx.lineTo(0, 0);
         ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.arc(-0.18, 0.26, 0.09, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#082f49';
-        ctx.beginPath();
-        ctx.arc(-0.21, 0.28, 0.05, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#f472b6';
-        ctx.beginPath();
-        ctx.ellipse(-0.22, 0.71, 0.16, 0.09, -0.2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(0.22, 0.71, 0.16, 0.09, 0.2, 0, Math.PI * 2);
         ctx.fill();
 
         ctx.restore();
@@ -2142,79 +2212,28 @@
       drawGhostHouse() {
         const ctx = this.ctx;
         const dpr = window.devicePixelRatio || 1;
-
         const pTL = this.gridToPixel(-3, 2);
         const pBR = this.gridToPixel(4, -2);
-        const w = pBR.px - pTL.px;
-        const h = pBR.py - pTL.py;
-
-        ctx.fillStyle = '#0f172a';
-        ctx.strokeStyle = '#ec4899';
-        ctx.lineWidth = 2.5 * dpr;
-
-        ctx.beginPath();
-        ctx.rect(pTL.px, pTL.py, w, h);
-        ctx.fill();
-        ctx.stroke();
-
-        const pDoor1 = this.gridToPixel(0, 2);
-        const pDoor2 = this.gridToPixel(1, 2);
-        ctx.strokeStyle = '#090d16';
-        ctx.beginPath();
-        ctx.moveTo(pDoor1.px, pDoor1.py);
-        ctx.lineTo(pDoor2.px, pDoor2.py);
-        ctx.stroke();
-
-        const ghosts = (this.currentLevelId === 3 || this.currentLevelId === 4) 
-          ? this.activeGhosts.filter(g => !g.removed) 
-          : [];
-
-        ghosts.forEach(g => {
-          this.drawSingleGhost(g.x, g.y, g.color, g.name);
-        });
-      }
-
-      drawSingleGhost(gx, gy, color, name) {
-        const ctx = this.ctx;
-        const dpr = window.devicePixelRatio || 1;
-        const pt = this.gridToPixel(gx, gy);
-        const S = pt.scale;
+        const rectW = pBR.px - pTL.px;
+        const rectH = pBR.py - pTL.py;
 
         ctx.save();
-        ctx.translate(pt.px, pt.py);
-
-        const r = S * 0.45;
-        const ghostColor = this.ghostsPurple ? '#8b5cf6' : color;
-
-        ctx.fillStyle = ghostColor;
-        ctx.shadowColor = ghostColor;
-        ctx.shadowBlur = 8 * dpr;
-
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+        ctx.strokeStyle = '#ec4899';
+        ctx.lineWidth = 3 * dpr;
         ctx.beginPath();
-        ctx.arc(0, -r * 0.2, r, Math.PI, 0, false);
-        ctx.lineTo(r, r * 0.8);
-        
-        const waveW = (2 * r) / 3;
-        ctx.lineTo(r - waveW * 0.5, r * 0.5);
-        ctx.lineTo(r - waveW, r * 0.8);
-        ctx.lineTo(r - waveW * 1.5, r * 0.5);
-        ctx.lineTo(r - waveW * 2, r * 0.8);
-        ctx.lineTo(-r, r * 0.8);
-        ctx.closePath();
+        ctx.roundRect(pTL.px, pTL.py, rectW, rectH, 8 * dpr);
         ctx.fill();
+        ctx.stroke();
 
-        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 2 * dpr;
+        const doorLeft = this.gridToPixel(-0.5, 2);
+        const doorRight = this.gridToPixel(1.5, 2);
         ctx.beginPath();
-        ctx.arc(-r * 0.35, -r * 0.2, r * 0.3, 0, Math.PI * 2);
-        ctx.arc(r * 0.35, -r * 0.2, r * 0.3, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = this.ghostsPurple ? '#f472b6' : '#1e3a8a';
-        ctx.beginPath();
-        ctx.arc(-r * 0.35, -r * 0.2, r * 0.15, 0, Math.PI * 2);
-        ctx.arc(r * 0.35, -r * 0.2, r * 0.15, 0, Math.PI * 2);
-        ctx.fill();
-
+        ctx.moveTo(doorLeft.px, doorLeft.py);
+        ctx.lineTo(doorRight.px, doorRight.py);
+        ctx.stroke();
         ctx.restore();
       }
 
@@ -2228,16 +2247,18 @@
 
           ctx.save();
           if (p.isPower) {
-            ctx.fillStyle = '#facc15';
-            ctx.shadowColor = '#facc15';
-            ctx.shadowBlur = 10 * dpr;
+            const pulse = 1 + 0.2 * Math.sin(Date.now() / 150);
+            const r = 8 * dpr;
+            ctx.fillStyle = '#ffffff';
+            //ctx.shadowColor = '#facc15';
+           // ctx.shadowBlur = 10 * dpr;
             ctx.beginPath();
-            ctx.arc(pt.px, pt.py, 5.5 * dpr, 0, Math.PI * 2);
+            ctx.arc(pt.px, pt.py, r, 0, Math.PI * 2);
             ctx.fill();
           } else {
-            ctx.fillStyle = '#f472b6';
+            ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.arc(pt.px, pt.py, 2.5 * dpr, 0, Math.PI * 2);
+            ctx.arc(pt.px, pt.py, 2.2 * dpr, 0, Math.PI * 2);
             ctx.fill();
           }
           ctx.restore();
@@ -2245,9 +2266,9 @@
       }
 
       drawFruits() {
+        if (!this.fruits) return;
         const ctx = this.ctx;
         const dpr = window.devicePixelRatio || 1;
-        if (!this.fruits) return;
 
         const fruitIcons = {
           banana: '🍌',
@@ -2262,102 +2283,100 @@
         this.fruits.forEach(f => {
           if (f.eaten) return;
           const pt = this.gridToPixel(f.x, f.y);
-
           ctx.save();
           ctx.font = `${14 * dpr}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(fruitIcons[f.type] || '🍒', pt.px, pt.py);
+          ctx.fillText(fruitIcons[f.type] || '🍎', pt.px, pt.py);
           ctx.restore();
         });
       }
 
-      drawMsPacMan(opacity = 1.0) {
+      drawGhosts() {
         const ctx = this.ctx;
         const dpr = window.devicePixelRatio || 1;
 
-        let curX = this.x;
-        let curY = this.y;
-        let curM = this.matrix;
-        let curS = this.scale;
+        this.activeGhosts.forEach(g => {
+          if (g.removed) return;
+          const pt = this.gridToPixel(g.x, g.y);
+          const S = pt.scale * 0.92;
+          const R = S * 0.68;
+          const color = this.ghostsPurple ? '#a855f7' : (g.color || '#ef4444');
 
-        if (this.animating) {
-          const t = this.animProgress;
-          curX = this.animStartPos.x + (this.animTargetPos.x - this.animStartPos.x) * t;
-          curY = this.animStartPos.y + (this.animTargetPos.y - this.animStartPos.y) * t;
-          curS = (1 - t) * this.animStartPos.scale + t * this.animTargetPos.scale;
+          ctx.save();
+          ctx.translate(pt.px, pt.py);
 
-          const m00 = (1 - t) * this.animStartPos.matrix[0][0] + t * this.animTargetPos.matrix[0][0];
-          const m01 = (1 - t) * this.animStartPos.matrix[0][1] + t * this.animTargetPos.matrix[0][1];
-          const m10 = (1 - t) * this.animStartPos.matrix[1][0] + t * this.animTargetPos.matrix[1][0];
-          const m11 = (1 - t) * this.animStartPos.matrix[1][1] + t * this.animTargetPos.matrix[1][1];
-          curM = [[m00, m01], [m10, m11]];
-        }
+          // Classic Pac-Man ghost silhouette: rounded dome, scalloped bottom,
+          // two white eyes with blue pupils. Drawn as vector art so it works
+          // regardless of installed fonts/icon libraries.
+          ctx.shadowColor = color;
+          ctx.shadowBlur = 8 * dpr;
+          ctx.fillStyle = color;
+          ctx.beginPath();
+          ctx.arc(0, -R * 0.15, R, Math.PI, 0, false);
+          ctx.lineTo(R, R * 0.75);
+          ctx.lineTo(R * 0.5, R * 0.55);
+          ctx.lineTo(0, R * 0.78);
+          ctx.lineTo(-R * 0.5, R * 0.55);
+          ctx.lineTo(-R, R * 0.75);
+          ctx.closePath();
+          ctx.fill();
 
-        const pt = this.gridToPixel(curX, curY);
-        const S = pt.scale;
+          ctx.shadowBlur = 0;
+
+          // Eyes.
+          const eyeY = -R * 0.22;
+          const eyeDX = R * 0.34;
+          const eyeR = R * 0.25;
+          ctx.fillStyle = '#fff';
+          ctx.beginPath();
+          ctx.arc(-eyeDX, eyeY, eyeR, 0, Math.PI * 2);
+          ctx.arc(eyeDX, eyeY, eyeR, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Pupils point left by default, matching the starting orientation.
+          ctx.fillStyle = '#2563eb';
+          const pupilR = eyeR * 0.48;
+          const pupilDX = R * 0.07;
+          ctx.beginPath();
+          ctx.arc(-eyeDX - pupilDX, eyeY, pupilR, 0, Math.PI * 2);
+          ctx.arc(eyeDX - pupilDX, eyeY, pupilR, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.restore();
+        });
+      }
+
+      drawTransformationTrajectory() {
+        if (!this.activeTransformation && !this.animating) return;
+        const ctx = this.ctx;
+        const dpr = window.devicePixelRatio || 1;
+
+        const startPt = this.gridToPixel(this.preX, this.preY);
+        const endPt = this.gridToPixel(this.x, this.y);
 
         ctx.save();
-        ctx.globalAlpha = opacity;
-
-        const a = S * curM[0][0] * curS;
-        const b = -S * curM[1][0] * curS;
-        const c = S * curM[0][1] * curS;
-        const d = -S * curM[1][1] * curS;
-
-        ctx.transform(a, b, c, d, pt.px, pt.py);
-
-        const R = 0.6375;
-
-        ctx.shadowColor = '#eab308';
-        ctx.shadowBlur = 12 * dpr;
-
-        ctx.fillStyle = '#facc15';
-        ctx.strokeStyle = '#eab308';
-        ctx.lineWidth = 0.08 / curS;
-
-        const mouthRad = this.mouthOpen;
-        const startAngle = Math.PI + mouthRad;
-        const endAngle = Math.PI - mouthRad;
+        ctx.strokeStyle = '#ec4899';
+        ctx.lineWidth = 2 * dpr;
+        ctx.setLineDash([5 * dpr, 5 * dpr]);
 
         ctx.beginPath();
-        ctx.arc(0, 0, R, startAngle, endAngle, false);
-        ctx.lineTo(0, 0);
-        ctx.closePath();
-        ctx.fill();
+        ctx.moveTo(startPt.px, startPt.py);
+        ctx.lineTo(endPt.px, endPt.py);
         ctx.stroke();
-
-        ctx.fillStyle = '#000000';
-        ctx.beginPath();
-        ctx.arc(-0.18, 0.26, 0.09, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#ec4899';
-        ctx.beginPath();
-        ctx.ellipse(-0.22, 0.71, 0.16, 0.09, -0.2, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.ellipse(0.22, 0.71, 0.16, 0.09, 0.2, 0, Math.PI * 2);
-        ctx.fill();
-
-        ctx.fillStyle = '#f43f5e';
-        ctx.beginPath();
-        ctx.arc(0, 0.71, 0.07, 0, Math.PI * 2);
-        ctx.fill();
 
         ctx.restore();
       }
 
       drawPreImageGhost() {
-        if (!this.animating && (this.preX === this.x && this.preY === this.y)) return;
-
+        if (this.history.length === 0) return;
         const ctx = this.ctx;
         const dpr = window.devicePixelRatio || 1;
+
         const pt = this.gridToPixel(this.preX, this.preY);
         const S = pt.scale;
 
         ctx.save();
-        ctx.globalAlpha = 0.35;
 
         const a = S * this.preMatrix[0][0] * this.preScale;
         const b = -S * this.preMatrix[1][0] * this.preScale;
@@ -2366,10 +2385,10 @@
 
         ctx.transform(a, b, c, d, pt.px, pt.py);
 
-        const R = 0.6375;
-        ctx.fillStyle = '#38bdf8';
-        ctx.strokeStyle = '#0284c7';
-        ctx.lineWidth = 0.08 / this.preScale;
+        const R = 0.65;
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.25)';
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+        ctx.lineWidth = 0.1 / this.preScale;
 
         ctx.beginPath();
         ctx.arc(0, 0, R, 0, Math.PI * 2);
@@ -2379,160 +2398,351 @@
         ctx.restore();
       }
 
-      drawTransformationTrajectory() {
-        if (!this.activeTransformation || !this.animating) return;
+      drawMsPacMan(alpha = 1.0) {
+  const ctx = this.ctx;
+  const dpr = window.devicePixelRatio || 1;
 
+  // Determine interpolated position & matrix during animation
+  let curX = this.x;
+  let curY = this.y;
+  let curScale = this.scale;
+  let curM = this.matrix;
+
+  if (this.animating) {
+    const t = this.animProgress;
+    curX = this.animStartPos.x + (this.animTargetPos.x - this.animStartPos.x) * t;
+    curY = this.animStartPos.y + (this.animTargetPos.y - this.animStartPos.y) * t;
+    curScale = (1 - t) * this.animStartPos.scale + t * this.animTargetPos.scale;
+
+    const m00 = (1 - t) * this.animStartPos.matrix[0][0] + t * this.animTargetPos.matrix[0][0];
+    const m01 = (1 - t) * this.animStartPos.matrix[0][1] + t * this.animTargetPos.matrix[0][1];
+    const m10 = (1 - t) * this.animStartPos.matrix[1][0] + t * this.animTargetPos.matrix[1][0];
+    const m11 = (1 - t) * this.animStartPos.matrix[1][1] + t * this.animTargetPos.matrix[1][1];
+    curM = [[m00, m01], [m10, m11]];
+  }
+
+  const pt = this.gridToPixel(curX, curY);
+  const S = pt.scale;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  // Transform matrix: maps local (+x = right, +y = top) to screen coordinates
+  const a = S * curM[0][0] * curScale;
+  const b = -S * curM[1][0] * curScale;
+  const c = S * curM[0][1] * curScale;
+  const d = -S * curM[1][1] * curScale;
+
+  ctx.transform(a, b, c, d, pt.px, pt.py);
+
+  const R = 0.65;
+  const mouthRad = this.mouthOpen;
+
+  // 1. Draw Body (Yellow Circle with Mouth facing LEFT along -x)
+  ctx.fillStyle = '#facc15';
+  ctx.beginPath();
+  ctx.arc(0, 0, R, Math.PI + mouthRad, Math.PI - mouthRad, false);
+  ctx.lineTo(0, 0);
+  ctx.closePath();
+  ctx.fill();
+
+  // 2. Draw Eye
+  ctx.fillStyle = '#0f172a';
+  ctx.beginPath();
+  ctx.arc(-0.15, 0.3, 0.1, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 3. Draw Pink Bow on TOP (+y in local space)
+  ctx.fillStyle = '#ec4899';
+  ctx.strokeStyle = '#be185d';
+  ctx.lineWidth = 0.04;
+
+  // Left loop of bow
+  ctx.beginPath();
+  ctx.ellipse(-0.25, 0.65, 0.2, 0.12, -Math.PI / 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Right loop of bow
+  ctx.beginPath();
+  ctx.ellipse(0.25, 0.65, 0.2, 0.12, Math.PI / 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // Center knot of bow
+  ctx.beginPath();
+  ctx.arc(0, 0.62, 0.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+      drawGhostedMsPacMan(gx, gy, gM, gScale) {
         const ctx = this.ctx;
         const dpr = window.devicePixelRatio || 1;
-        const tr = this.activeTransformation;
+        const pt = this.gridToPixel(gx, gy);
+        const S = pt.scale;
 
         ctx.save();
-        ctx.strokeStyle = '#ec4899';
-        ctx.lineWidth = 2 * dpr;
-        ctx.setLineDash([4 * dpr, 4 * dpr]);
+        ctx.globalAlpha = 0.42;
 
-        if (tr.type === 'reflection') {
-          if (tr.lineType === 'x=k') {
-            const p1 = this.gridToPixel(tr.lineVal, -16);
-            const p2 = this.gridToPixel(tr.lineVal, 14);
-            ctx.beginPath();
-            ctx.moveTo(p1.px, p1.py);
-            ctx.lineTo(p2.px, p2.py);
-            ctx.stroke();
-          } else if (tr.lineType === 'y=k') {
-            const p1 = this.gridToPixel(-15, tr.lineVal);
-            const p2 = this.gridToPixel(16, tr.lineVal);
-            ctx.beginPath();
-            ctx.moveTo(p1.px, p1.py);
-            ctx.lineTo(p2.px, p2.py);
-            ctx.stroke();
-          } else if (tr.lineType === 'y=x') {
-            const p1 = this.gridToPixel(-13, -13);
-            const p2 = this.gridToPixel(13, 13);
-            ctx.beginPath();
-            ctx.moveTo(p1.px, p1.py);
-            ctx.lineTo(p2.px, p2.py);
-            ctx.stroke();
-          } else if (tr.lineType === 'y=-x') {
-            const p1 = this.gridToPixel(-13, 13);
-            const p2 = this.gridToPixel(13, -13);
-            ctx.beginPath();
-            ctx.moveTo(p1.px, p1.py);
-            ctx.lineTo(p2.px, p2.py);
-            ctx.stroke();
-          }
-        } else if (tr.type === 'translation') {
-          const pStart = this.gridToPixel(this.animStartPos.x, this.animStartPos.y);
-          const pEnd = this.gridToPixel(this.animTargetPos.x, this.animTargetPos.y);
-          ctx.beginPath();
-          ctx.moveTo(pStart.px, pStart.py);
-          ctx.lineTo(pEnd.px, pEnd.py);
-          ctx.stroke();
-        } else if (tr.type === 'rotation') {
-          const centerPt = this.gridToPixel(tr.aboutX, tr.aboutY);
-          ctx.fillStyle = '#facc15';
-          ctx.beginPath();
-          ctx.arc(centerPt.px, centerPt.py, 5 * dpr, 0, Math.PI * 2);
-          ctx.fill();
-        }
+        const a = S * gM[0][0] * gScale;
+        const b = -S * gM[1][0] * gScale;
+        const c = S * gM[0][1] * gScale;
+        const d = -S * gM[1][1] * gScale;
+        ctx.transform(a, b, c, d, pt.px, pt.py);
 
+        const R = 0.70;
+        const mouthRad = Math.max(0.18, this.mouthOpen);
+        const startAngle = Math.PI + mouthRad;
+        const endAngle = Math.PI - mouthRad;
+
+        ctx.fillStyle = '#ffe36e';
+        ctx.strokeStyle = '#22d3ee';
+        ctx.lineWidth = 0.055;
+        ctx.shadowColor = '#22d3ee';
+        ctx.shadowBlur = 8 * dpr;
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, R, startAngle, endAngle, false);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#172033';
+        ctx.beginPath();
+        ctx.arc(-R * 0.18, -R * 0.48, R * 0.105, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ghosted red bow.
+        ctx.fillStyle = '#f05a68';
+        const bowY = -R * 0.91;
+        const bowSize = R * 0.34;
+        ctx.beginPath();
+        ctx.moveTo(0, bowY);
+        ctx.lineTo(-bowSize, bowY - bowSize * 0.62);
+        ctx.lineTo(-bowSize * 0.72, bowY + bowSize * 0.34);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(0, bowY);
+        ctx.lineTo(bowSize, bowY - bowSize * 0.62);
+        ctx.lineTo(bowSize * 0.72, bowY + bowSize * 0.34);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, bowY, bowSize * 0.27, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.restore();
+
+        ctx.save();
+        ctx.font = `bold ${7 * dpr}px "Press Start 2P", monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#67e8f9';
+        ctx.shadowColor = '#082f49';
+        ctx.shadowBlur = 5 * dpr;
+        ctx.fillText(`STEP ${this.replayStep + 1}`, pt.px, pt.py - (22 * gScale * dpr));
         ctx.restore();
       }
 
+      updateHUD() {
+        const hudScore = document.getElementById('hud-score');
+        const hudPellets = document.getElementById('hud-pellets');
+        const hudPos = document.getElementById('hud-pos');
+
+        if (hudScore) hudScore.innerText = this.score.toString().padStart(4, '0');
+
+        if (hudPellets) {
+          const eatenCount = this.pellets.filter(p => p.eaten).length;
+          hudPellets.innerText = `${eatenCount} / ${this.pellets.length}`;
+        }
+
+        if (hudPos) {
+          hudPos.innerText = `(${Math.round(this.x)}, ${Math.round(this.y)})`;
+        }
+      }
+
+	renderHistory() {
+		const historyList = document.getElementById('history-list');
+		const stepCount = document.getElementById('step-count');
+		if (!historyList) return;
+
+		if (stepCount) {
+			stepCount.innerText = `${this.history.length} step${this.history.length === 1 ? '' : 's'}`;
+		}
+
+		if (this.currentLevelId === 1 || this.currentLevelId === 2 || this.currentLevelId === 3) { 
+			const levelCfg = LEVELS[this.currentLevelId];
+			const startX = levelCfg ? levelCfg.startX : 0;
+			const startY = levelCfg ? levelCfg.startY : -9;
+
+			const chronHistory = [...this.history].reverse();
+			const showStartingPosition = this.currentLevelId === 1; // Only Level 1 includes Starting Position
+    
+			const allSteps = [];
+    
+			// Step 1: Starting position (only added for Level 1)
+			if (showStartingPosition) {
+			allSteps.push({
+				stepNum: 1,
+				trans: "Starting Position",
+				coord: `(${startX}, ${startY})`
+			});
+			}
+
+			const stepOffset = showStartingPosition ? 2 : 1;
+
+			chronHistory.forEach((h, idx) => {
+			const isRotOrRef = (h.type === 'rotation' || h.type === 'reflection');
+			allSteps.push({
+				stepNum: idx + stepOffset,
+				trans: h.notation,
+				coord: isRotOrRef ? "" : `(${h.toX}, ${h.toY})`
+			});
+			});
+
+			const buildTable = (startStep, endStep) => {
+			let rows = '';
+			for (let i = startStep; i <= endStep; i++) {
+				const stepData = allSteps.find(s => s.stepNum === i);
+				const stepNumDisplay = i;
+				const transDisplay = stepData ? stepData.trans : '';
+				const coordDisplay = stepData ? stepData.coord : '';
+        
+				const replayIndexMatch = showStartingPosition ? (i - 1) : i;
+				const isReplayCurrent = this.isReplayActive && (this.replayStep === replayIndexMatch);
+
+				rows += `
+				<tr class="h-6 border-b border-slate-800/60 hover:bg-slate-800/40 transition ${isReplayCurrent ? 'bg-cyan-950/80 text-cyan-300 font-bold' : ''}" data-step-index="${replayIndexMatch}">
+					<td class="px-2 py-0.5 text-center font-arcade text-[10px] text-slate-400 border-r border-slate-800/80">${stepNumDisplay}</td>
+					<td class="px-2 py-0.5 text-left font-mono text-[11px] text-yellow-300 border-r border-slate-800/80 truncate max-w-[130px]" title="${transDisplay}">${transDisplay}</td>
+					<td class="px-2 py-0.5 text-center font-mono text-[11px] text-cyan-300">${coordDisplay}</td>
+				</tr>
+				`;
+			}
+
+			return `
+				<div class="flex-1 overflow-x-auto border border-slate-800 rounded-xl bg-slate-950/90 shadow-inner">
+				<table class="w-full text-left border-collapse min-w-[240px]">
+					<thead>
+					<tr class="bg-slate-800/90 text-yellow-400 font-arcade text-[9px] uppercase border-b border-slate-700 tracking-wider">
+					<th class="px-2 py-1.5 text-center w-14 border-r border-slate-700">step</th>
+					<th class="px-2 py-1.5 text-center border-r border-slate-700">transformation</th>
+					<th class="px-2 py-1.5 text-center w-28">new coordinate</th></tr>
+					</thead>
+					<tbody>
+					${rows}
+					</tbody>
+				</table>
+				</div>
+			`;
+			};
+
+			historyList.className = "grid grid-cols-1 md:grid-cols-2 gap-3 overflow-y-auto max-h-[600px] pr-1 scroll-smooth w-full";
+
+			if (this.currentLevelId === 1) {
+			const table1 = buildTable(1, 23);
+			const table2 = buildTable(24, 46);
+			historyList.innerHTML = table1 + table2;
+
+			} else if (this.currentLevelId === 2 || this.currentLevelId === 3) {
+			const table3 = buildTable(1, 10);
+			const table4 = buildTable(11, 20);
+			historyList.innerHTML = table3 + table4;
+			}
+
+			} else {
+			historyList.className = "flex flex-col gap-2 overflow-y-auto max-h-[280px] pr-1 scroll-smooth w-full";
+			if (this.history.length === 0) {
+			historyList.innerHTML = `<p class="text-xs text-slate-500 italic text-center py-4">No steps recorded yet. Enter a transformation command to begin!</p>`;
+			return;
+			}
+
+			let html = '';
+			this.history.forEach((step, reverseIdx) => {
+			const chronologicalIndex = this.history.length - reverseIdx;
+			const isReplayCurrent = this.isReplayActive && (this.replayStep === chronologicalIndex);
+
+			html += `
+				<div data-step-index="${chronologicalIndex}" class="p-2.5 rounded-xl border transition-all duration-300 flex items-center justify-between text-xs font-mono ${isReplayCurrent ? 'border-cyan-400 bg-cyan-950/90 ring-2 ring-cyan-400/60 glow-cyan' : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'}">
+				<div class="flex items-center gap-2">
+					<span class="w-6 h-6 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px] font-arcade text-yellow-400 shrink-0">
+					${chronologicalIndex}
+					</span>
+					<div class="flex flex-col">
+					<span class="text-yellow-300 font-bold">${step.notation}</span>
+					<span class="text-[10px] text-slate-400">Pos: (${step.toX}, ${step.toY})${step.type === 'dilation' ? ` | Scale: ${step.toScale}x` : ''}</span>
+					</div>
+				</div>
+				<div class="flex items-center gap-2">
+					${step.scoreGained > 0 ? `<span class="text-[10px] font-arcade text-emerald-400 bg-emerald-950/60 border border-emerald-700/50 px-1.5 py-0.5 rounded">+${step.scoreGained} pts</span>` : ''}
+					<span class="replay-indicator hidden text-[9px] font-arcade text-cyan-300 bg-cyan-950 border border-cyan-500/50 px-1.5 py-0.5 rounded animate-pulse">ACTIVE</span>
+				</div>
+				</div>
+			`;
+			});
+			historyList.innerHTML = html;
+		}
+	}
+
       showFeedback(msg, type = "info") {
-        const box = document.getElementById('feedback-msg');
+        const msgBox = document.getElementById('feedback-msg');
         const icon = document.getElementById('feedback-icon');
         const text = document.getElementById('feedback-text');
 
-        if (!box || !icon || !text) return;
+        if (!msgBox || !text) return;
 
-        box.classList.remove('hidden', 'bg-emerald-950/80', 'text-emerald-300', 'border-emerald-700/60',
-          'bg-rose-950/80', 'text-rose-300', 'border-rose-700/60',
-          'bg-slate-950', 'text-cyan-300', 'border-cyan-700/60');
-
-        box.classList.add('border');
+        msgBox.classList.remove('hidden', 'bg-emerald-950', 'text-emerald-300', 'border-emerald-700', 'bg-red-950', 'text-red-300', 'border-red-700', 'bg-blue-950', 'text-blue-300', 'border-blue-700');
 
         if (type === 'success') {
-          box.classList.add('bg-emerald-950/80', 'text-emerald-300', 'border-emerald-700/60');
-          icon.className = 'fa-solid fa-circle-check text-emerald-400 text-sm shrink-0';
+          msgBox.classList.add('bg-emerald-950', 'text-emerald-300', 'border', 'border-emerald-700');
+          if (icon) icon.className = 'fa-solid fa-circle-check text-emerald-400';
         } else if (type === 'error') {
-          box.classList.add('bg-rose-950/80', 'text-rose-300', 'border-rose-700/60');
-          icon.className = 'fa-solid fa-triangle-exclamation text-rose-400 text-sm shrink-0';
+          msgBox.classList.add('bg-red-950', 'text-red-300', 'border', 'border-red-700');
+          if (icon) icon.className = 'fa-solid fa-triangle-exclamation text-red-400';
         } else {
-          box.classList.add('bg-slate-950', 'text-cyan-300', 'border-cyan-700/60');
-          icon.className = 'fa-solid fa-circle-info text-cyan-400 text-sm shrink-0';
+          msgBox.classList.add('bg-blue-950', 'text-blue-300', 'border', 'border-blue-700');
+          if (icon) icon.className = 'fa-solid fa-circle-info text-blue-400';
         }
 
         text.innerText = msg;
       }
 
-      updateHUD() {
-        const scoreEl = document.getElementById('hud-score');
-        const pelletsEl = document.getElementById('hud-pellets');
-        const posEl = document.getElementById('hud-pos');
+      switchTab(tabName) {
+        const rulesBtn = document.getElementById('tab-btn-rules');
+        const videoBtn = document.getElementById('tab-btn-video');
+        const rulesContent = document.getElementById('tab-content-rules');
+        const videoContent = document.getElementById('tab-content-video');
 
-        if (scoreEl) scoreEl.innerText = this.score.toString().padStart(4, '0');
-
-        if (pelletsEl) {
-          const totalDots = this.pellets.length;
-          const eatenDots = this.pellets.filter(p => p.eaten).length;
-          pelletsEl.innerText = `${eatenDots} / ${totalDots}`;
+        if (tabName === 'rules') {
+          if (rulesBtn) rulesBtn.className = 'flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-pink-600 text-white shadow cursor-pointer';
+          if (videoBtn) videoBtn.className = 'flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-slate-400 hover:text-white cursor-pointer';
+          if (rulesContent) rulesContent.classList.remove('hidden');
+          if (videoContent) videoContent.classList.add('hidden');
+        } else {
+          if (videoBtn) videoBtn.className = 'flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all bg-pink-600 text-white shadow cursor-pointer';
+          if (rulesBtn) rulesBtn.className = 'flex-1 py-1.5 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all text-slate-400 hover:text-white cursor-pointer';
+          if (videoContent) videoContent.classList.remove('hidden');
+          if (rulesContent) rulesContent.classList.add('hidden');
         }
-
-        if (posEl) {
-          posEl.innerText = `(${this.x}, ${this.y})`;
-        }
-      }
-
-      renderHistory() {
-        const historyList = document.getElementById('history-list');
-        const stepCount = document.getElementById('step-count');
-
-        if (stepCount) {
-          stepCount.innerText = `${this.history.length} step${this.history.length === 1 ? '' : 's'}`;
-        }
-
-        if (!historyList) return;
-
-        if (this.history.length === 0) {
-          historyList.innerHTML = `
-            <div class="text-center py-6 text-slate-500 text-xs">
-              <i class="fa-solid fa-hourglass-start text-lg mb-1 block opacity-40"></i>
-              No steps performed yet. Enter a transformation command above!
-            </div>
-          `;
-          return;
-        }
-
-        let html = '';
-        this.history.forEach((step, idx) => {
-          const chronoIndex = this.history.length - 1 - idx;
-          html += `
-            <div data-step-index="${chronoIndex}" class="p-2.5 rounded-xl border border-slate-800 bg-slate-950/60 text-xs flex items-center justify-between transition gap-2">
-              <div class="flex items-center gap-2">
-                <span class="font-arcade text-[10px] text-pink-400 bg-pink-950/60 px-1.5 py-0.5 rounded border border-pink-800/50">#${this.history.length - idx}</span>
-                <div>
-                  <div class="font-mono text-yellow-300 font-semibold">${step.notation}</div>
-                  <div class="text-[10px] text-slate-400">
-                    (${step.fromX}, ${step.fromY}) ➔ (${step.toX}, ${step.toY})
-                    ${step.scoreGained > 0 ? `<span class="text-emerald-400 font-semibold ml-1">+${step.scoreGained} pts</span>` : ''}
-                  </div>
-                </div>
-              </div>
-              <span class="replay-indicator hidden text-[9px] font-arcade text-cyan-300 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-700 animate-pulse">REPLAY</span>
-            </div>
-          `;
-        });
-
-        historyList.innerHTML = html;
-        this.updateHistoryHighlight();
       }
 
       initEventListeners() {
+        const levelSelect = document.getElementById('level-select');
+        if (levelSelect) {
+          levelSelect.addEventListener('change', (e) => {
+            const newLevel = parseInt(e.target.value, 10);
+            this.loadLevel(newLevel);
+          });
+        }
+
         const form = document.getElementById('command-form');
         const input = document.getElementById('command-input');
-
-        if (form) {
+        if (form && input) {
           form.addEventListener('submit', (e) => {
             e.preventDefault();
             const cmd = input.value;
@@ -2543,130 +2753,119 @@
           });
         }
 
-        document.querySelectorAll('.preset-chip').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const cmd = btn.getAttribute('data-cmd');
+        const presetChips = document.querySelectorAll('.preset-chip');
+        presetChips.forEach(chip => {
+          chip.addEventListener('click', () => {
+            const cmd = chip.getAttribute('data-cmd');
             if (cmd) this.executeCommand(cmd);
           });
         });
 
-        const levelSelect = document.getElementById('level-select');
-        if (levelSelect) {
-          levelSelect.addEventListener('change', (e) => {
-            const newLevel = parseInt(e.target.value, 10);
-            this.loadLevel(newLevel);
-            
-            const videoModal = document.getElementById('video-modal');
-            if (newLevel === 1 && videoModal) {
-              videoModal.classList.remove('hidden');
+        const resetBtn = document.getElementById('btn-reset-level');
+        const resetModal = document.getElementById('reset-confirm-modal');
+        const confirmResetBtn = document.getElementById('btn-confirm-reset');
+        const cancelResetBtn = document.getElementById('btn-cancel-reset');
+
+        if (resetBtn && resetModal) {
+          resetBtn.addEventListener('click', () => {
+            resetModal.classList.remove('hidden');
+          });
+        }
+
+        if (confirmResetBtn) {
+          confirmResetBtn.addEventListener('click', () => {
+            if (resetModal) resetModal.classList.add('hidden');
+            this.resetCurrentLevel();
+          });
+        }
+
+        if (cancelResetBtn) {
+          cancelResetBtn.addEventListener('click', () => {
+            if (resetModal) resetModal.classList.add('hidden');
+          });
+        }
+
+        const confirmGameOverBtn = document.getElementById('btn-confirm-game-over');
+        if (confirmGameOverBtn) {
+          confirmGameOverBtn.addEventListener('click', () => {
+            this.resetCurrentLevel();
+          });
+        }
+
+        const undoBtn = document.getElementById('btn-undo');
+        if (undoBtn) {
+          undoBtn.addEventListener('click', () => this.undoStep());
+        }
+
+        const startReplayBtn = document.getElementById('btn-start-replay');
+        if (startReplayBtn) {
+          startReplayBtn.addEventListener('click', () => this.startReplay());
+        }
+
+        const prevReplayBtn = document.getElementById('btn-replay-prev');
+        if (prevReplayBtn) {
+          prevReplayBtn.addEventListener('click', () => this.goToReplayStep(this.replayStep - 1));
+        }
+
+        const playReplayBtn = document.getElementById('btn-replay-play');
+        if (playReplayBtn) {
+          playReplayBtn.addEventListener('click', () => this.toggleReplayPlay());
+        }
+
+        const nextReplayBtn = document.getElementById('btn-replay-next');
+        if (nextReplayBtn) {
+          nextReplayBtn.addEventListener('click', () => this.goToReplayStep(this.replayStep + 1));
+        }
+
+        const exitReplayBtn = document.getElementById('btn-exit-replay');
+        if (exitReplayBtn) {
+          exitReplayBtn.addEventListener('click', () => this.exitReplay());
+        }
+
+        const scanlineBtn = document.getElementById('btn-toggle-scanlines');
+        const canvasContainer = document.getElementById('canvas-container');
+        if (scanlineBtn && canvasContainer) {
+          scanlineBtn.addEventListener('click', () => {
+            canvasContainer.classList.toggle('crt-overlay');
+          });
+        }
+
+        const cheatBtn = document.getElementById('btn-cheat-sheet');
+        const cheatModal = document.getElementById('cheat-sheet-modal');
+        const closeCheat1 = document.getElementById('btn-close-modal');
+        const closeCheat2 = document.getElementById('btn-close-modal-2');
+
+        if (cheatBtn && cheatModal) {
+          cheatBtn.addEventListener('click', () => cheatModal.classList.remove('hidden'));
+        }
+        if (closeCheat1 && cheatModal) {
+          closeCheat1.addEventListener('click', () => cheatModal.classList.add('hidden'));
+        }
+        if (closeCheat2 && cheatModal) {
+          closeCheat2.addEventListener('click', () => cheatModal.classList.add('hidden'));
+        }
+
+        const rulesBtn = document.getElementById('tab-btn-rules');
+        const videoBtn = document.getElementById('tab-btn-video');
+        if (rulesBtn) rulesBtn.addEventListener('click', () => this.switchTab('rules'));
+        if (videoBtn) videoBtn.addEventListener('click', () => this.switchTab('video'));
+
+        const videoPlayer = document.getElementById('video-player');
+        const speedBtns = document.querySelectorAll('.video-speed-btn');
+        speedBtns.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const speed = parseFloat(btn.getAttribute('data-speed'));
+            if (videoPlayer && !isNaN(speed)) {
+              videoPlayer.playbackRate = speed;
+              speedBtns.forEach(b => {
+                b.classList.remove('bg-pink-600', 'text-white', 'border-pink-400');
+                b.classList.add('bg-slate-800', 'text-slate-300', 'border-slate-700');
+              });
+              btn.classList.remove('bg-slate-800', 'text-slate-300', 'border-slate-700');
+              btn.classList.add('bg-pink-600', 'text-white', 'border-pink-400');
             }
           });
-        }
-
-        const btnReset = document.getElementById('btn-reset-level');
-        if (btnReset) {
-          btnReset.addEventListener('click', () => {
-            const resetModal = document.getElementById('reset-confirm-modal');
-            if (resetModal) resetModal.classList.remove('hidden');
-          });
-        }
-
-        const btnConfirmReset = document.getElementById('btn-confirm-reset');
-        if (btnConfirmReset) {
-          btnConfirmReset.addEventListener('click', () => {
-            this.resetCurrentLevel();
-            const resetModal = document.getElementById('reset-confirm-modal');
-            if (resetModal) resetModal.classList.add('hidden');
-          });
-        }
-
-        const btnCancelReset = document.getElementById('btn-cancel-reset');
-        if (btnCancelReset) {
-          btnCancelReset.addEventListener('click', () => {
-            const resetModal = document.getElementById('reset-confirm-modal');
-            if (resetModal) resetModal.classList.add('hidden');
-          });
-        }
-
-        const btnConfirmGameOver = document.getElementById('btn-confirm-game-over');
-        if (btnConfirmGameOver) {
-          btnConfirmGameOver.addEventListener('click', () => {
-            this.resetCurrentLevel();
-          });
-        }
-
-        const btnUndo = document.getElementById('btn-undo');
-        if (btnUndo) {
-          btnUndo.addEventListener('click', () => {
-            this.undoStep();
-          });
-        }
-
-        const btnCrt = document.getElementById('btn-crt');
-        const container = document.getElementById('canvas-container');
-        if (btnCrt && container) {
-          btnCrt.addEventListener('click', () => {
-            container.classList.toggle('crt-overlay');
-          });
-        }
-
-        const cheatModal = document.getElementById('cheat-sheet-modal');
-        const btnCheat = document.getElementById('btn-cheat-sheet');
-        const btnCloseCheat = document.getElementById('btn-close-modal');
-        const btnCloseCheat2 = document.getElementById('btn-close-modal-2');
-
-        if (btnCheat && cheatModal) {
-          btnCheat.addEventListener('click', () => cheatModal.classList.remove('hidden'));
-        }
-        if (btnCloseCheat && cheatModal) {
-          btnCloseCheat.addEventListener('click', () => cheatModal.classList.add('hidden'));
-        }
-        if (btnCloseCheat2 && cheatModal) {
-          btnCloseCheat2.addEventListener('click', () => cheatModal.classList.add('hidden'));
-        }
-
-        // Video Player Window Listeners
-        const videoModal = document.getElementById('video-modal');
-        const btnVideo = document.getElementById('btn-toggle-video');
-        const btnCloseVideo = document.getElementById('btn-close-video');
-
-        if (btnVideo && videoModal) {
-          btnVideo.addEventListener('click', () => {
-            videoModal.classList.toggle('hidden');
-          });
-        }
-
-        if (btnCloseVideo && videoModal) {
-          btnCloseVideo.addEventListener('click', () => {
-            videoModal.classList.add('hidden');
-          });
-        }
-
-        // Replay Controls
-        const btnStartReplay = document.getElementById('btn-start-replay');
-        if (btnStartReplay) {
-          btnStartReplay.addEventListener('click', () => this.startReplay());
-        }
-
-        const btnExitReplay = document.getElementById('btn-exit-replay');
-        if (btnExitReplay) {
-          btnExitReplay.addEventListener('click', () => this.exitReplay());
-        }
-
-        const btnReplayPlay = document.getElementById('btn-replay-play');
-        if (btnReplayPlay) {
-          btnReplayPlay.addEventListener('click', () => this.toggleReplayPlay());
-        }
-
-        const btnReplayPrev = document.getElementById('btn-replay-prev');
-        if (btnReplayPrev) {
-          btnReplayPrev.addEventListener('click', () => this.goToReplayStep(this.replayStep - 1));
-        }
-
-        const btnReplayNext = document.getElementById('btn-replay-next');
-        if (btnReplayNext) {
-          btnReplayNext.addEventListener('click', () => this.goToReplayStep(this.replayStep + 1));
-        }
+        });
       }
     }
 
